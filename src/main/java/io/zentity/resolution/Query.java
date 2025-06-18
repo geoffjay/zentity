@@ -28,6 +28,7 @@ import io.zentity.resolution.input.Input;
 import io.zentity.resolution.input.Term;
 import io.zentity.resolution.input.value.StringValue;
 import io.zentity.resolution.input.value.Value;
+import org.opensearch.action.search.SearchAction;
 import org.opensearch.action.search.SearchRequestBuilder;
 import org.opensearch.common.settings.Settings;
 import org.opensearch.common.unit.TimeValue;
@@ -406,11 +407,11 @@ public class Query {
     public static SearchRequestBuilder buildSearchRequest(Job job, String indexName, String query) throws IOException {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         SearchModule searchModule = new SearchModule(Settings.EMPTY, Collections.emptyList());
-        try (XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(new NamedXContentRegistry(searchModule
+        try (XContentParser parser = XContentFactory.jsonBuilder().contentType().xContent().createParser(new NamedXContentRegistry(searchModule
                 .getNamedXContents()), DeprecationHandler.THROW_UNSUPPORTED_OPERATION, new ByteArrayInputStream(query.getBytes()))) {
-            searchSourceBuilder.parseXContent(parser, false, nf -> true);
+            searchSourceBuilder.parseXContent(parser);
         }
-        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(job.client());
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(job.client(), SearchAction.INSTANCE);
         searchRequestBuilder.setIndices(indexName).setSource(searchSourceBuilder);
         if (job.searchAllowPartialSearchResults() != null)
             searchRequestBuilder.setAllowPartialSearchResults(job.searchAllowPartialSearchResults());

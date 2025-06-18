@@ -111,8 +111,8 @@
                         <exclude>**/org/opensearch/plugin/zentity/ResolutionAction.java</exclude>
                         <exclude>**/org/opensearch/plugin/zentity/SetupAction.java</exclude>
                         <exclude>**/org/opensearch/plugin/zentity/BulkAction.java</exclude>
-                        <exclude>io/zentity/resolution/Query.java</exclude>
-                        <exclude>io/zentity/resolution/Job.java</exclude>
+
+                        
                     </excludes>
                 </configuration>
             </plugin>
