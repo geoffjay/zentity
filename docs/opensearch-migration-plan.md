@@ -27,6 +27,24 @@ This document outlines a comprehensive, phased approach to migrating the Zentity
 5. **Docker Configuration**: Test infrastructure and CI/CD
 6. **Integration Tests**: Test containers and API validation
 
+### Version Strategy and Future Planning
+
+**Primary Target: OpenSearch 2.17.0**
+- **Rationale**: Mature, stable, backward compatible with Elasticsearch 7.10 APIs
+- **Advantages**: Lower migration complexity, extensive documentation, established plugin ecosystem
+- **Technical Requirements**: JDK 11+, Lucene 9.x compatibility
+
+**Future Consideration: OpenSearch 3.0**
+- **Status**: Recently released (January 2025)
+- **Major Changes**: Upgraded to Lucene 10, requires JDK 21+, significant performance improvements
+- **Breaking Changes**: More extensive due to major version upgrade and Lucene 10
+- **Recommendation**: Plan separate migration after 2.x migration is stable and proven
+
+**Migration Path Strategy:**
+1. **Phase 1**: Migrate to OpenSearch 2.17.0 (current plan)
+2. **Phase 2**: Assess OpenSearch 3.0 migration (6-12 months post-2.x deployment)
+3. **Maintain**: Dual compatibility during transition periods
+
 ## Phase 1: Environment Setup and Preparation (Week 1-2)
 
 ### 1.1 Development Environment Setup
@@ -64,11 +82,29 @@ echo "Phase 1: Environment Setup - COMPLETED" > migration-tracking/phase1.md
 - [ ] Map Elasticsearch APIs to OpenSearch equivalents
 - [ ] Identify potential breaking changes and compatibility issues
 - [ ] Create detailed file-by-file migration checklist
+- [ ] Analyze security configuration differences
+- [ ] Document version check implications
 
 **Deliverables:**
 - `migration-tracking/dependency-audit.md`
 - `migration-tracking/api-mapping.md`
 - `migration-tracking/file-checklist.md`
+- `migration-tracking/security-config-analysis.md`
+
+**Critical API Mappings to Document:**
+```java
+// Exception handling changes
+ElasticsearchException → OpenSearchException
+
+// Client API changes  
+org.elasticsearch.client.internal.node.NodeClient → org.opensearch.client.node.NodeClient
+
+// XContent API changes (critical for JSON processing)
+org.elasticsearch.xcontent.XContentBuilder → org.opensearch.core.xcontent.XContentBuilder
+
+// Common utilities
+org.elasticsearch.common.Strings → org.opensearch.common.Strings
+```
 
 ## Phase 2: Core Migration Implementation (Week 3-6)
 
@@ -91,6 +127,14 @@ echo "Phase 1: Environment Setup - COMPLETED" > migration-tracking/phase1.md
     <artifactId>opensearch</artifactId>
     <version>${opensearch.version}</version>
     <scope>provided</scope>
+</dependency>
+
+<!-- Update test dependencies -->
+<dependency>
+    <groupId>org.opensearch.client</groupId>
+    <artifactId>opensearch-java</artifactId>
+    <version>${opensearch.version}</version>
+    <scope>test</scope>
 </dependency>
 ```
 
@@ -220,7 +264,51 @@ opensearch.version=${opensearch.version}
 <zentity.classname>org.opensearch.plugin.zentity.ZentityPlugin</zentity.classname>
 ```
 
-### 2.5 Core Logic Verification
+### 2.5 Security Configuration Handling
+
+**Priority**: High  
+**Risk**: Medium  
+**Estimated Time**: 1 day
+
+**Key Difference**: OpenSearch has security enabled by default, unlike Elasticsearch
+
+**Tasks:**
+- [ ] Update Docker configurations to disable security for testing
+- [ ] Document security implications for production deployments
+- [ ] Test plugin functionality with security enabled
+- [ ] Create security configuration guide for users
+
+**Docker Configuration Updates:**
+```yaml
+# Development environment - security disabled
+environment:
+  - "DISABLE_INSTALL_DEMO_CONFIG=true"
+  - "DISABLE_SECURITY_PLUGIN=true"
+
+# Production considerations - document security requirements
+# - Authentication/authorization impact on API endpoints
+# - SSL/TLS configuration requirements
+# - Role-based access control for entity resolution
+```
+
+### 2.6 Version Check and Client Compatibility
+
+**Priority**: Medium  
+**Risk**: Medium  
+**Estimated Time**: 1 day
+
+**Potential Issues:**
+- Version string checks in client code
+- Cluster settings name changes
+- Deprecated API usage
+
+**Tasks:**
+- [ ] Audit code for version-specific checks
+- [ ] Test with different OpenSearch client versions
+- [ ] Validate cluster setting compatibility
+- [ ] Document version compatibility matrix
+
+### 2.7 Core Logic Verification
 
 **Priority**: High  
 **Risk**: Medium  
@@ -258,6 +346,7 @@ mvn test -Dtest="*Test" -Dmaven.failsafe.skip=true
 - Update existing `src/test/resources/docker-compose.yml` for OpenSearch
 - Ensure development Docker Compose supports both environments
 - Update CI/CD pipeline configurations
+- Handle OpenSearch security defaults
 
 **New Docker Compose for Tests:**
 ```yaml
@@ -300,11 +389,13 @@ services:
 - Update `AbstractIT.java` for OpenSearch compatibility
 - Modify test container configuration
 - Update health check endpoints and timing
+- Handle security configuration differences
 
 **Phase 3.2.2: Test Data and Fixtures**
 - Verify test data compatibility
 - Update API endpoint references
 - Validate entity model loading
+- Test with security disabled configuration
 
 **Phase 3.2.3: API Test Updates**
 - `HomeActionIT.java`: Update version field references
@@ -337,6 +428,7 @@ curl -X POST http://localhost:9400/_zentity/resolution/test_model -d @test-query
 - Update Maven build profiles for OpenSearch
 - Modify CI/CD pipeline for dual building
 - Update release artifact naming
+- Handle security plugin considerations in build
 
 **Build Configuration:**
 ```xml
@@ -497,7 +589,33 @@ export OPENSEARCH_VERSION=2.17.0
 # Test data migration between Elasticsearch and OpenSearch
 ```
 
-### 4.4 Regression Testing
+### 4.4 Security Configuration Testing
+
+**Priority**: High  
+**Risk**: Medium  
+**Estimated Time**: 1 day
+
+**Test Scenarios:**
+1. **Security Disabled** (development/testing)
+2. **Security Enabled** (production simulation)
+3. **Mixed Environments** (partial security)
+
+**Tasks:**
+```bash
+# Test with security disabled
+export OPENSEARCH_SECURITY=false
+./scripts/dev-setup.sh opensearch
+
+# Test with security enabled
+export OPENSEARCH_SECURITY=true
+./scripts/dev-setup.sh opensearch
+
+# Validate authentication requirements
+# Test role-based access control
+# Document security configuration requirements
+```
+
+### 4.5 Regression Testing
 
 **Priority**: Critical  
 **Risk**: High  
@@ -554,11 +672,15 @@ export OPENSEARCH_VERSION=2.17.0
 - Create migration guide for existing users
 - Update API documentation
 - Update Docker Compose and development guides
+- Document security configuration requirements
+- Create OpenSearch 3.0 future migration considerations
 
 **Deliverables:**
 - `README.md` updates
 - `docs/opensearch-compatibility.md`
 - `docs/migration-from-elasticsearch.md`
+- `docs/security-configuration.md`
+- `docs/opensearch-3.0-planning.md`
 - Updated `DEVELOPMENT.md`
 
 ### 5.2 Release Artifact Preparation
@@ -572,6 +694,7 @@ export OPENSEARCH_VERSION=2.17.0
 - Prepare dual-build pipeline (Elasticsearch + OpenSearch)
 - Update GitHub Actions workflows
 - Prepare release notes
+- Document compatibility matrix
 
 **Artifact Naming:**
 - Elasticsearch: `zentity-1.8.3-elasticsearch-8.17.0.zip`
@@ -595,6 +718,7 @@ export OPENSEARCH_VERSION=2.17.0
 # - Performance benchmarks
 # - Memory leak detection
 # - Error handling validation
+# - Security configuration testing
 ```
 
 **Sign-off Criteria:**
@@ -604,6 +728,7 @@ export OPENSEARCH_VERSION=2.17.0
 - [ ] No memory leaks detected
 - [ ] Documentation complete and accurate
 - [ ] Release artifacts build successfully
+- [ ] Security configurations documented and tested
 
 ## Risk Management and Mitigation
 
@@ -613,16 +738,25 @@ export OPENSEARCH_VERSION=2.17.0
 - **Risk**: Breaking API changes between Elasticsearch and OpenSearch
 - **Mitigation**: Incremental migration with compilation validation
 - **Rollback**: Git branch with atomic commits per file
+- **Research Finding**: XContent API changes are particularly critical for JSON processing
 
 **2. Integration Test Updates**
 - **Risk**: Test infrastructure failures blocking validation
 - **Mitigation**: Parallel development environment maintenance
 - **Rollback**: Maintain Elasticsearch test environment
+- **Research Finding**: Security configuration differences require special handling
 
 **3. Core API Compatibility**
 - **Risk**: Subtle behavioral differences affecting entity resolution
 - **Mitigation**: Comprehensive regression testing
 - **Rollback**: Detailed comparison framework
+- **Research Finding**: OpenSearch maintains API compatibility with Elasticsearch 7.10
+
+**4. Security Configuration Differences**
+- **Risk**: OpenSearch security enabled by default causing integration failures
+- **Mitigation**: Explicit security configuration in all environments
+- **Rollback**: Document security bypass procedures
+- **Research Finding**: Major difference requiring careful handling
 
 ### Medium-Risk Areas
 
@@ -635,54 +769,75 @@ export OPENSEARCH_VERSION=2.17.0
 - **Risk**: OpenSearch performance differences
 - **Mitigation**: Continuous benchmarking during migration
 - **Rollback**: Performance baseline documentation
+- **Research Finding**: OpenSearch 2.x provides similar performance to Elasticsearch 8.x
+
+**3. Version Check Dependencies**
+- **Risk**: Client code checking version strings
+- **Mitigation**: Audit and update version-specific code
+- **Rollback**: Version compatibility shim layer
+- **Research Finding**: Some clients may check version strings
+
+### Future Migration Considerations
+
+**OpenSearch 3.0 Migration (Future)**
+- **JDK 21 Requirement**: Plan JDK upgrade timeline
+- **Lucene 10 Changes**: Significant internal changes requiring testing
+- **Breaking Changes**: More extensive breaking changes than 2.x migration
+- **Performance Benefits**: Significant performance improvements available
+- **Timeline**: 6-12 months after 2.x migration stabilization
 
 ### Contingency Plans
 
 **Plan A: Full Migration Success**
 - Release OpenSearch version alongside Elasticsearch version
 - Maintain dual compatibility during transition period
+- Gradual user migration with support
 
 **Plan B: Partial Migration Issues**
 - Release OpenSearch version as beta/experimental
 - Continue Elasticsearch version as stable
 - Address issues in subsequent releases
+- Document known limitations
 
 **Plan C: Migration Failure**
-- Document compatibility issues
+- Document compatibility issues and blockers
 - Maintain Elasticsearch version only
 - Plan future migration with additional resources
+- Consider OpenSearch 3.0 as alternative path
 
 ## Success Metrics
 
 ### Technical Metrics
 - **Code Coverage**: Maintain >90% test coverage
-- **Performance**: <5% performance regression
-- **Compatibility**: 100% API compatibility
+- **Performance**: <5% performance regression from Elasticsearch version
+- **Compatibility**: 100% API compatibility with existing functionality
 - **Reliability**: Zero critical bugs in core functionality
+- **Security**: Successful operation with both security enabled/disabled
 
 ### Project Metrics
 - **Timeline**: Complete within 12 weeks
 - **Quality**: Pass all automated and manual tests
 - **Documentation**: Complete user and developer documentation
 - **Adoption**: Successful deployment in test environments
+- **User Satisfaction**: Smooth migration experience for existing users
 
 ## Timeline Summary
 
 | Phase | Duration | Key Deliverables | Risk Level |
 |-------|----------|------------------|------------|
-| 1: Environment Setup | 2 weeks | Development environment, migration planning | Low |
-| 2: Core Migration | 4 weeks | Package updates, import migration, plugin descriptor | High |
-| 3: Testing Infrastructure | 2 weeks | Docker updates, integration test migration | Medium |
-| 4: Comprehensive Testing | 2 weeks | Full test suite, performance validation | High |
-| 5: Documentation & Release | 2 weeks | Documentation, release preparation | Low |
+| 1: Environment Setup | 2 weeks | Development environment, migration planning, security analysis | Low |
+| 2: Core Migration | 4 weeks | Package updates, import migration, plugin descriptor, security config | High |
+| 3: Testing Infrastructure | 2 weeks | Docker updates, integration test migration, security testing | Medium |
+| 4: Comprehensive Testing | 2 weeks | Full test suite, performance validation, regression testing | High |
+| 5: Documentation & Release | 2 weeks | Documentation, release preparation, migration guides | Low |
 
 **Total Duration**: 12 weeks  
 **Critical Path**: Core Migration → Integration Testing → Comprehensive Testing  
 **Key Milestones**: 
 - Week 6: Core migration complete, basic compilation successful
-- Week 8: Integration tests passing
-- Week 10: Full test suite passing
-- Week 12: Release ready
+- Week 8: Integration tests passing, security configurations working
+- Week 10: Full test suite passing, performance benchmarks met
+- Week 12: Release ready, documentation complete
 
 ## Post-Migration Activities
 
@@ -691,17 +846,26 @@ export OPENSEARCH_VERSION=2.17.0
 - [ ] Monitor adoption and feedback
 - [ ] Address any critical issues
 - [ ] Update CI/CD for dual releases
+- [ ] Provide user migration support
 
 ### Short-term (Month 2-3)
-- [ ] Gather user feedback
-- [ ] Performance optimization
+- [ ] Gather user feedback and usage analytics
+- [ ] Performance optimization based on real-world usage
 - [ ] Additional OpenSearch feature utilization
-- [ ] Enhanced documentation
+- [ ] Enhanced documentation based on user questions
+- [ ] Security configuration optimization
 
 ### Long-term (Month 4-6)
 - [ ] OpenSearch 3.0 compatibility assessment
-- [ ] Advanced OpenSearch features integration
+- [ ] Advanced OpenSearch features integration (vector search, etc.)
 - [ ] Elasticsearch compatibility deprecation planning
-- [ ] Community adoption analysis
+- [ ] Community adoption analysis and roadmap planning
+- [ ] Performance comparison studies
 
-This comprehensive migration plan ensures a systematic, well-tested transition from Elasticsearch to OpenSearch while maintaining stability, performance, and functionality of the Zentity plugin. 
+### Future Planning (Month 6+)
+- [ ] OpenSearch 3.0 migration planning (JDK 21, Lucene 10)
+- [ ] Elasticsearch support lifecycle decisions
+- [ ] Advanced entity resolution features leveraging OpenSearch capabilities
+- [ ] Community contribution to OpenSearch ecosystem
+
+This comprehensive migration plan ensures a systematic, well-tested transition from Elasticsearch to OpenSearch while maintaining stability, performance, and functionality of the Zentity plugin. The plan incorporates critical research findings around security configuration differences, API compatibility considerations, and future migration planning for OpenSearch 3.0. 

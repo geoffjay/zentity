@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Development Docker Compose for Zentity Plugin Testing
 # This file provides both Elasticsearch and OpenSearch environments for development and testing
 # 
@@ -42,7 +40,7 @@ services:
         hard: -1
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-      - ./target/releases:/usr/share/elasticsearch/plugins/releases
+      - ./target/releases:/opt/zentity/releases
       - ./src/test/resources:/usr/share/elasticsearch/test-data
     ports:
       - "9200:9200"
@@ -78,7 +76,7 @@ services:
         hard: -1
     volumes:
       - opensearch_data:/usr/share/opensearch/data
-      - ./target/releases:/usr/share/opensearch/plugins/releases
+      - ./target/releases:/opt/zentity/releases
       - ./src/test/resources:/usr/share/opensearch/test-data
     ports:
       - "9201:9200"

@@ -13,12 +13,12 @@ OS_VERSION=${OPENSEARCH_VERSION:-2.17.0}
 if [ "$TARGET" = "elasticsearch" ]; then
     CONTAINER_NAME="zentity-elasticsearch"
     PLUGIN_FILE="zentity-${PLUGIN_VERSION}-elasticsearch-${ES_VERSION}.zip"
-    PLUGIN_PATH="/usr/share/elasticsearch/plugins/releases/${PLUGIN_FILE}"
+    PLUGIN_PATH="/opt/zentity/releases/${PLUGIN_FILE}"
     INSTALL_CMD="elasticsearch-plugin install --batch file://${PLUGIN_PATH}"
 elif [ "$TARGET" = "opensearch" ]; then
     CONTAINER_NAME="zentity-opensearch"
     PLUGIN_FILE="zentity-${PLUGIN_VERSION}-opensearch-${OS_VERSION}.zip"
-    PLUGIN_PATH="/usr/share/opensearch/plugins/releases/${PLUGIN_FILE}"
+    PLUGIN_PATH="/opt/zentity/releases/${PLUGIN_FILE}"
     INSTALL_CMD="opensearch-plugin install --batch file://${PLUGIN_PATH}"
 else
     echo "Error: Target must be 'elasticsearch' or 'opensearch'"
@@ -40,6 +40,27 @@ if ! docker exec "${CONTAINER_NAME}" test -f "${PLUGIN_PATH}"; then
     echo "Error: Plugin file not found: ${PLUGIN_PATH}"
     echo "Make sure you have built the plugin with: mvn clean package"
     exit 1
+fi
+
+# Check if plugin is already installed
+PLUGIN_INSTALLED=false
+if [ "$TARGET" = "elasticsearch" ]; then
+    if docker exec "${CONTAINER_NAME}" ls /usr/share/elasticsearch/plugins/zentity 2>/dev/null; then
+        PLUGIN_INSTALLED=true
+    fi
+else
+    if docker exec "${CONTAINER_NAME}" ls /usr/share/opensearch/plugins/zentity 2>/dev/null; then
+        PLUGIN_INSTALLED=true
+    fi
+fi
+
+if [ "$PLUGIN_INSTALLED" = "true" ]; then
+    echo "Plugin already installed. Removing existing installation..."
+    if [ "$TARGET" = "elasticsearch" ]; then
+        docker exec "${CONTAINER_NAME}" elasticsearch-plugin remove zentity || true
+    else
+        docker exec "${CONTAINER_NAME}" opensearch-plugin remove zentity || true
+    fi
 fi
 
 # Install the plugin

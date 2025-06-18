@@ -65,6 +65,11 @@ print_success "All prerequisites found"
 if [ "$BUILD_PLUGIN" = "true" ]; then
     print_step "Building Zentity plugin..."
     
+    # Set up Java environment for asdf users
+    if command -v asdf &> /dev/null; then
+        export JAVA_HOME=$(asdf where java 2>/dev/null || echo $JAVA_HOME)
+    fi
+    
     # Clean and build
     mvn clean package -DskipTests
     
@@ -142,12 +147,26 @@ if [ "$BUILD_PLUGIN" = "true" ]; then
     
     if [ "$TARGET" = "both" ]; then
         ./scripts/install-plugin.sh elasticsearch
-        ./scripts/install-plugin.sh opensearch
+        # Try OpenSearch installation, but don't fail if plugin doesn't exist
+        if ./scripts/install-plugin.sh opensearch 2>/dev/null; then
+            print_success "OpenSearch plugin installed"
+        else
+            print_warning "OpenSearch plugin not available (this is expected during migration)"
+        fi
     else
         ./scripts/install-plugin.sh "$TARGET"
     fi
     
     print_success "Plugin installed"
+    
+    # Wait for services to be ready again after plugin installation
+    print_step "Waiting for services to be ready after plugin installation..."
+    if [ "$TARGET" = "elasticsearch" ] || [ "$TARGET" = "both" ]; then
+        wait_for_service "Elasticsearch" "http://localhost:9200"
+    fi
+    if [ "$TARGET" = "opensearch" ] || [ "$TARGET" = "both" ]; then
+        wait_for_service "OpenSearch" "http://localhost:9201"
+    fi
 else
     print_warning "Skipping plugin installation (BUILD_PLUGIN=false)"
 fi
@@ -156,12 +175,14 @@ fi
 if [ "$LOAD_DATA" = "true" ]; then
     print_step "Loading test data..."
     
-    # Wait a bit for plugin to be fully loaded
-    sleep 5
-    
     if [ "$TARGET" = "both" ]; then
         ./scripts/load-test-data.sh elasticsearch
-        ./scripts/load-test-data.sh opensearch
+        # Try OpenSearch data loading, but don't fail if plugin isn't installed
+        if ./scripts/load-test-data.sh opensearch 2>/dev/null; then
+            print_success "OpenSearch test data loaded"
+        else
+            print_warning "OpenSearch test data not loaded (plugin not available)"
+        fi
     else
         ./scripts/load-test-data.sh "$TARGET"
     fi
