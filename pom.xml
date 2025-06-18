@@ -54,6 +54,12 @@
             <scope>provided</scope><!-- Provided by OpenSearch -->
         </dependency>
         <dependency>
+            <groupId>org.opensearch</groupId>
+            <artifactId>opensearch-x-content</artifactId>
+            <version>${opensearch.version}</version>
+            <scope>provided</scope><!-- Provided by OpenSearch -->
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>${jackson.core.version}</version>
@@ -63,7 +69,7 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.databind.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope><!-- Provided by OpenSearch -->
         </dependency>
 
         <!-- Test infrastructure -->
@@ -96,6 +102,10 @@
                 <configuration>
                     <source>9</source>
                     <target>9</target>
+                    <!-- Exclude Elasticsearch plugin files during OpenSearch migration -->
+                    <excludes>
+                        <exclude>**/org/elasticsearch/plugin/zentity/**</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
 

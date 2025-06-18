@@ -28,13 +28,13 @@ import io.zentity.resolution.input.Attribute;
 import io.zentity.resolution.input.Input;
 import io.zentity.resolution.input.value.Value;
 import org.opensearch.OpenSearchException;
-import org.opensearch.action.ActionListener;
+import org.opensearch.core.action.ActionListener;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.node.NodeClient;
-import org.opensearch.common.Strings;
+import org.opensearch.plugin.zentity.StringsUtil;
 import org.opensearch.index.IndexNotFoundException;
-import org.opensearch.xcontent.ToXContent;
-import org.opensearch.xcontent.XContentParseException;
+import org.opensearch.core.xcontent.ToXContent;
+import org.opensearch.core.xcontent.XContentParseException;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -52,7 +52,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.xcontent.XContentFactory.jsonBuilder;
+import static org.opensearch.common.xcontent.XContentFactory.jsonBuilder;
 import static io.zentity.common.Patterns.COLON;
 
 public class Job {
@@ -736,7 +736,7 @@ public class Job {
                     responseString = "{\"error\":{\"root_cause\":[" + cause + "],\"type\":\"parsing_exception\",\"reason\":\"" + e.getMessage() + "\",\"line\":" + e.getLineNumber() + ",\"col\":" + e.getColumnNumber() + "},\"status\":400}";
                 } else  {
                     OpenSearchException e = (OpenSearchException) responseError;
-                    String cause = Strings.toString(e.toXContent(jsonBuilder().startObject(), ToXContent.EMPTY_PARAMS).endObject());
+                    String cause = e.toXContent(jsonBuilder().startObject(), ToXContent.EMPTY_PARAMS).endObject().toString();
                     responseString = "{\"error\":{\"root_cause\":[" + cause + "],\"type\":\"" + OpenSearchException.getExceptionName(e) + "\",\"reason\":\"" + e.getMessage() + "\"},\"status\":" + e.status().getStatus() + "}";
                 }
             }

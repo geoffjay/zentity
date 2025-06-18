@@ -21,7 +21,8 @@ import io.zentity.common.Json;
 import io.zentity.common.Patterns;
 import io.zentity.common.StreamUtil;
 import joptsimple.internal.Strings;
-import org.opensearch.common.collect.Tuple;
+import org.opensearch.plugin.zentity.StringsUtil;
+import org.opensearch.plugin.zentity.Tuple;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +57,7 @@ public class BulkAction {
         return "{" +
             Json.quoteString("took") + ":" + result.took +
             "," + Json.quoteString("errors") + ":" + result.errors +
-            "," + Json.quoteString("items") + ":" + "[" + Strings.join(result.items, ",") + "]" +
+                            "," + Json.quoteString("items") + ":" + "[" + StringsUtil.join(result.items, ",") + "]" +
             "}";
     }
 

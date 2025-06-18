@@ -33,11 +33,11 @@ import org.opensearch.common.settings.Settings;
 import org.opensearch.common.unit.TimeValue;
 import org.opensearch.search.SearchModule;
 import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.xcontent.DeprecationHandler;
-import org.opensearch.xcontent.NamedXContentRegistry;
-import org.opensearch.xcontent.XContentFactory;
-import org.opensearch.xcontent.XContentParser;
-import org.opensearch.xcontent.XContentType;
+import org.opensearch.core.xcontent.DeprecationHandler;
+import org.opensearch.core.xcontent.NamedXContentRegistry;
+import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.core.xcontent.XContentParser;
+import org.opensearch.common.xcontent.XContentType;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

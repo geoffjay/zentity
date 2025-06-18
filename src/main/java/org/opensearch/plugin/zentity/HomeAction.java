@@ -18,17 +18,17 @@
 package org.opensearch.plugin.zentity;
 
 import org.opensearch.client.node.NodeClient;
-import org.opensearch.xcontent.XContentBuilder;
-import org.opensearch.xcontent.XContentFactory;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.rest.BaseRestHandler;
-import org.opensearch.rest.RestResponse;
+import org.opensearch.rest.BytesRestResponse;
 import org.opensearch.rest.RestRequest;
-import org.opensearch.rest.RestStatus;
+import org.opensearch.core.rest.RestStatus;
 
 import java.util.List;
 import java.util.Properties;
 
-import static org.elasticsearch.rest.RestRequest.Method.GET;
+import static org.opensearch.rest.RestRequest.Method.GET;
 
 
 public class HomeAction extends BaseRestHandler {
@@ -63,7 +63,7 @@ public class HomeAction extends BaseRestHandler {
             content.field("elasticsearch", props.getProperty("opensearch.version"));
             content.endObject();
             content.endObject();
-            channel.sendResponse(new RestResponse(RestStatus.OK, content));
+            channel.sendResponse(new BytesRestResponse(RestStatus.OK, content));
         };
     }
 }

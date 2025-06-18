@@ -26,8 +26,8 @@ import io.zentity.resolution.Job;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.opensearch.OpenSearchSecurityException;
-import org.opensearch.action.ActionListener;
-import org.opensearch.action.ActionResponse;
+import org.opensearch.core.action.ActionListener;
+import org.opensearch.core.action.ActionResponse;
 import org.opensearch.action.DocWriteResponse;
 import org.opensearch.action.admin.indices.create.CreateIndexResponse;
 import org.opensearch.action.admin.indices.get.GetIndexRequest;
@@ -38,12 +38,11 @@ import org.opensearch.action.get.GetResponse;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.support.WriteRequest;
 import org.opensearch.client.node.NodeClient;
-import org.opensearch.common.Strings;
 import org.opensearch.common.xcontent.ChunkedToXContent;
-import org.opensearch.xcontent.ToXContent;
-import org.opensearch.xcontent.XContentBuilder;
-import org.opensearch.xcontent.XContentFactory;
-import org.opensearch.xcontent.XContentType;
+import org.opensearch.core.xcontent.ToXContent;
+import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.common.collect.Tuple;
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.rest.BaseRestHandler;
@@ -60,11 +59,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyMap;
-import static org.elasticsearch.rest.RestRequest.Method;
-import static org.elasticsearch.rest.RestRequest.Method.DELETE;
-import static org.elasticsearch.rest.RestRequest.Method.GET;
-import static org.elasticsearch.rest.RestRequest.Method.POST;
-import static org.elasticsearch.rest.RestRequest.Method.PUT;
+import static org.opensearch.rest.RestRequest.Method;
+import static org.opensearch.rest.RestRequest.Method.DELETE;
+import static org.opensearch.rest.RestRequest.Method.GET;
+import static org.opensearch.rest.RestRequest.Method.POST;
+import static org.opensearch.rest.RestRequest.Method.PUT;
 
 public class ModelsAction extends BaseRestHandler {
 
@@ -807,7 +806,7 @@ public class ModelsAction extends BaseRestHandler {
 
                 // Run a single model management operation.
                 runOperation(client, method, entityModel, paramsFinal, reqParams, true, ActionListener.wrap(
-                        (xContentBuilder) -> delegate.onResponse(new BulkAction.SingleResult("{\"" + actionFinal + "\":" + Strings.toString(xContentBuilder) + "}", false)),
+                        (xContentBuilder) -> delegate.onResponse(new BulkAction.SingleResult("{\"" + actionFinal + "\":" + StringsUtil.toString(xContentBuilder) + "}", false)),
                         (e) -> delegateFailure(delegate, actionFinal, e)
                 ));
             } catch (Exception e) {

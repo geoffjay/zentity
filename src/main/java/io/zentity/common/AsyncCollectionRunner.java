@@ -17,7 +17,7 @@
  */
 package io.zentity.common;
 
-import org.opensearch.action.ActionListener;
+import org.opensearch.core.action.ActionListener;
 
 import java.util.Collection;
 import java.util.Deque;

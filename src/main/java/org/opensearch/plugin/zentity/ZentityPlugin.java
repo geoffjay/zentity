@@ -25,7 +25,7 @@ import org.opensearch.OpenSearchSecurityException;
 import org.opensearch.OpenSearchStatusException;
 import org.opensearch.cluster.metadata.IndexNameExpressionResolver;
 import org.opensearch.cluster.node.DiscoveryNodes;
-import org.opensearch.common.Strings;
+import org.opensearch.plugin.zentity.StringsUtil;
 import org.opensearch.common.io.stream.NamedWriteableRegistry;
 import org.opensearch.common.settings.ClusterSettings;
 import org.opensearch.common.settings.IndexScopedSettings;
@@ -37,7 +37,7 @@ import org.opensearch.rest.RestController;
 import org.opensearch.rest.RestHandler;
 import org.opensearch.rest.RestResponse;
 import org.opensearch.rest.RestStatus;
-import org.opensearch.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.plugins.ActionPlugin;
 import org.opensearch.plugins.Plugin;
 
@@ -176,7 +176,7 @@ public class ZentityPlugin extends Plugin implements ActionPlugin {
      * @param content The content to process and return.
      */
     protected static void sendResponse(RestChannel channel, XContentBuilder content) {
-        sendResponse(channel, RestStatus.OK, Strings.toString(content));
+                        sendResponse(channel, RestStatus.OK, StringsUtil.toString(content));
     }
 
     /**

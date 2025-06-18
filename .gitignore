@@ -3,6 +3,9 @@
 *.iml
 *.iws
 
+# VS Code
+.vscode/settings.json
+
 # Maven
 log/
 target/

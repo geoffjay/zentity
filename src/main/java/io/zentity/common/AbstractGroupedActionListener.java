@@ -18,7 +18,7 @@
 package io.zentity.common;
 
 
-import org.opensearch.action.ActionListener;
+import org.opensearch.core.action.ActionListener;
 import org.opensearch.action.support.GroupedActionListener;
 import org.opensearch.common.util.concurrent.AtomicArray;
 import org.opensearch.common.util.concurrent.CountDown;

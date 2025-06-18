@@ -17,8 +17,8 @@
  */
 package org.opensearch.plugin.zentity;
 
-import org.opensearch.core.Booleans;
-import org.opensearch.core.TimeValue;
+import org.opensearch.common.Booleans;
+import org.opensearch.common.unit.TimeValue;
 import org.opensearch.rest.RestRequest;
 
 import java.util.Map;

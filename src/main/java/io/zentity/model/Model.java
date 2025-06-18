@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Json;
 import io.zentity.common.Patterns;
 import org.opensearch.OpenSearchException;
-import org.opensearch.common.Strings;
+import org.opensearch.plugin.zentity.StringsUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -100,8 +100,8 @@ public class Model {
             throw new ValidationException(msg.apply("", "must not be empty"));
         if (Patterns.EMPTY_STRING.matcher(name).matches())
             throw new ValidationException(msg.apply(name, "must not be empty"));
-        if (!Strings.validFileName(name))
-            throw new ValidationException(msg.apply(name, "must not contain the following characters: " + Strings.INVALID_FILENAME_CHARS));
+        if (!StringsUtil.validFileName(name))
+            throw new ValidationException(msg.apply(name, "must not contain the following characters: " + StringsUtil.INVALID_FILENAME_CHARS));
         if (name.contains("#"))
             throw new ValidationException(msg.apply(name, "must not contain '#'"));
         if (name.contains(":"))

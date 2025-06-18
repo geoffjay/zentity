@@ -25,9 +25,9 @@ import io.zentity.resolution.Job;
 import io.zentity.resolution.input.Input;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.opensearch.action.ActionListener;
+import org.opensearch.core.action.ActionListener;
 import org.opensearch.client.node.NodeClient;
-import org.opensearch.common.collect.Tuple;
+import org.opensearch.common.Strings;
 import org.opensearch.rest.BaseRestHandler;
 import org.opensearch.rest.RestRequest;
 import org.opensearch.rest.RestResponse;
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyMap;
-import static org.elasticsearch.rest.RestRequest.Method.POST;
+import static org.opensearch.rest.RestRequest.Method.POST;
 
 public class ResolutionAction extends BaseRestHandler {
 
