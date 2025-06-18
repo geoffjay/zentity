@@ -17,6 +17,7 @@
  */
 package org.opensearch.plugin.zentity;
 
+import org.opensearch.OpenSearchSecurityException;
 import org.opensearch.cluster.metadata.IndexNameExpressionResolver;
 import org.opensearch.cluster.node.DiscoveryNodes;
 import org.opensearch.common.settings.ClusterSettings;
@@ -44,6 +45,12 @@ class NotFoundException extends Exception {
 
 class NotImplementedException extends Exception {
     NotImplementedException(String message) {
+        super(message);
+    }
+}
+
+class ForbiddenException extends OpenSearchSecurityException {
+    ForbiddenException(String message) {
         super(message);
     }
 }

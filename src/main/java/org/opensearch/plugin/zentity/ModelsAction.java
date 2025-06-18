@@ -38,12 +38,11 @@ import org.opensearch.action.get.GetResponse;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.action.support.WriteRequest;
 import org.opensearch.client.node.NodeClient;
-import org.opensearch.common.xcontent.ChunkedToXContent;
 import org.opensearch.core.xcontent.ToXContent;
-import org.opensearch.common.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentBuilder;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.common.xcontent.XContentType;
-import org.opensearch.common.collect.Tuple;
+// Using custom Tuple class instead of org.opensearch.common.collect.Tuple
 import org.opensearch.index.IndexNotFoundException;
 import org.opensearch.rest.BaseRestHandler;
 import org.opensearch.rest.RestRequest;

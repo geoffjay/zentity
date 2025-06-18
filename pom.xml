@@ -106,11 +106,11 @@
                     <excludes>
                         <exclude>**/org/elasticsearch/plugin/zentity/**</exclude>
                         <!-- Temporarily exclude problematic files for minimal testing -->
-                        <exclude>**/org/opensearch/plugin/zentity/ZentityPlugin.java</exclude>
-                        <exclude>**/org/opensearch/plugin/zentity/ModelsAction.java</exclude>
-                        <exclude>**/org/opensearch/plugin/zentity/ResolutionAction.java</exclude>
-                        <exclude>**/org/opensearch/plugin/zentity/SetupAction.java</exclude>
-                        <exclude>**/org/opensearch/plugin/zentity/BulkAction.java</exclude>
+                                                  <exclude>**/org/opensearch/plugin/zentity/ZentityPlugin.java</exclude>
+                          <exclude>**/org/opensearch/plugin/zentity/ModelsAction.java</exclude>
+                          <exclude>**/org/opensearch/plugin/zentity/ResolutionAction.java</exclude>
+                                                  <exclude>**/org/opensearch/plugin/zentity/SetupAction.java</exclude>
+                          <exclude>**/org/opensearch/plugin/zentity/BulkAction.java</exclude>
 
                         
                     </excludes>
