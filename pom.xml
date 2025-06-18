@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <name>zentity</name>
-    <description>Entity resolution for Elasticsearch.</description>
+    <description>Entity resolution for OpenSearch.</description>
     <groupId>io.zentity</groupId>
     <artifactId>zentity</artifactId>
-    <version>${zentity.version}-elasticsearch-${elasticsearch.version}</version>
+    <version>${zentity.version}-opensearch-${opensearch.version}</version>
     <url>https://zentity.io</url>
     <inceptionYear>2018</inceptionYear>
 
@@ -16,12 +16,12 @@
 
         <!-- zentity properties -->
         <zentity.author>Dave Moore</zentity.author>
-        <zentity.classname>org.elasticsearch.plugin.zentity.ZentityPlugin</zentity.classname>
+        <zentity.classname>org.opensearch.plugin.zentity.ZentityPlugin</zentity.classname>
         <zentity.website>${project.url}</zentity.website>
         <zentity.version>1.8.3</zentity.version>
 
         <!-- Dependency versions -->
-        <elasticsearch.version>8.17.0</elasticsearch.version>
+        <opensearch.version>2.17.0</opensearch.version>
         <jackson.core.version>2.17.0</jackson.core.version>
         <jackson.databind.version>2.17.0</jackson.databind.version>
         <jdk.version>1.17</jdk.version>
@@ -48,16 +48,16 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>provided</scope><!-- Provided by Elasticsearch -->
+            <groupId>org.opensearch</groupId>
+            <artifactId>opensearch</artifactId>
+            <version>${opensearch.version}</version>
+            <scope>provided</scope><!-- Provided by OpenSearch -->
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>${jackson.core.version}</version>
-            <scope>provided</scope><!-- Provided by Elasticsearch -->
+            <scope>provided</scope><!-- Provided by OpenSearch -->
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -68,9 +68,9 @@
 
         <!-- Test infrastructure -->
         <dependency>
-            <groupId>co.elastic.clients</groupId>
-            <artifactId>elasticsearch-java</artifactId>
-            <version>${elasticsearch.version}</version>
+            <groupId>org.opensearch.client</groupId>
+            <artifactId>opensearch-java</artifactId>
+            <version>${opensearch.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -234,7 +234,7 @@
                 <configuration>
                     <environmentVariables>
                         <BUILD_DIRECTORY>${project.build.directory}</BUILD_DIRECTORY>
-                        <ELASTICSEARCH_VERSION>${elasticsearch.version}</ELASTICSEARCH_VERSION>
+                        <ELASTICSEARCH_VERSION>${opensearch.version}</ELASTICSEARCH_VERSION>
                         <ZENTITY_VERSION>${zentity.version}</ZENTITY_VERSION>
                     </environmentVariables>
                     <assertions enableSystemAssertions="false">

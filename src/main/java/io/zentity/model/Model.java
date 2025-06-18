@@ -21,8 +21,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Json;
 import io.zentity.common.Patterns;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.common.Strings;
+import org.opensearch.OpenSearchException;
+import org.opensearch.common.Strings;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -113,7 +113,7 @@ public class Model {
             byteCount = name.getBytes("UTF-8").length;
         } catch (UnsupportedEncodingException e) {
             // UTF-8 should always be supported, but rethrow this if it is not for some reason
-            throw new ElasticsearchException("Unable to determine length of name [" + name + "]", e);
+            throw new OpenSearchException("Unable to determine length of name [" + name + "]", e);
         }
         if (byteCount > MAX_STRICT_NAME_BYTES)
             throw new ValidationException(msg.apply(name, "name is too long, (" + byteCount + " > " + MAX_STRICT_NAME_BYTES + ")"));

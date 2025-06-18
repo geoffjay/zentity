@@ -29,9 +29,9 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.nio.entity.NStringEntity;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.ResponseException;
+import org.opensearch.client.Request;
+import org.opensearch.client.Response;
+import org.opensearch.client.ResponseException;
 import org.junit.*;
 
 import java.io.IOException;

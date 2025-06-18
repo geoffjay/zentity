@@ -27,14 +27,14 @@ import io.zentity.model.ValidationException;
 import io.zentity.resolution.input.Attribute;
 import io.zentity.resolution.input.Input;
 import io.zentity.resolution.input.value.Value;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.internal.node.NodeClient;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.index.IndexNotFoundException;
-import org.elasticsearch.xcontent.ToXContent;
-import org.elasticsearch.xcontent.XContentParseException;
+import org.opensearch.OpenSearchException;
+import org.opensearch.action.ActionListener;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.client.node.NodeClient;
+import org.opensearch.common.Strings;
+import org.opensearch.index.IndexNotFoundException;
+import org.opensearch.xcontent.ToXContent;
+import org.opensearch.xcontent.XContentParseException;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -138,7 +138,7 @@ public class Job {
      */
     public static String serializeException(Exception e, boolean includeErrorTrace) {
         List<String> errorParts = new ArrayList<>();
-        if (e instanceof ElasticsearchException || e instanceof XContentParseException)
+        if (e instanceof OpenSearchException || e instanceof XContentParseException)
             errorParts.add("\"by\":\"elasticsearch\"");
         else
             errorParts.add("\"by\":\"zentity\"");
@@ -735,9 +735,9 @@ public class Job {
                     String cause = "{\"type\":\"parsing_exception\",\"reason\":\"" + e.getMessage() + "\",\"line\":" + e.getLineNumber() + ",\"col\":" + e.getColumnNumber() + "}";
                     responseString = "{\"error\":{\"root_cause\":[" + cause + "],\"type\":\"parsing_exception\",\"reason\":\"" + e.getMessage() + "\",\"line\":" + e.getLineNumber() + ",\"col\":" + e.getColumnNumber() + "},\"status\":400}";
                 } else  {
-                    ElasticsearchException e = (ElasticsearchException) responseError;
+                    OpenSearchException e = (OpenSearchException) responseError;
                     String cause = Strings.toString(e.toXContent(jsonBuilder().startObject(), ToXContent.EMPTY_PARAMS).endObject());
-                    responseString = "{\"error\":{\"root_cause\":[" + cause + "],\"type\":\"" + ElasticsearchException.getExceptionName(e) + "\",\"reason\":\"" + e.getMessage() + "\"},\"status\":" + e.status().getStatus() + "}";
+                    responseString = "{\"error\":{\"root_cause\":[" + cause + "],\"type\":\"" + OpenSearchException.getExceptionName(e) + "\",\"reason\":\"" + e.getMessage() + "\"},\"status\":" + e.status().getStatus() + "}";
                 }
             }
             String logged = serializeLoggedQuery(job.input(), job.hop(), query, responseString);

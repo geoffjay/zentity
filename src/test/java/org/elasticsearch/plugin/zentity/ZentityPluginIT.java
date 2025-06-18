@@ -19,8 +19,8 @@ package org.elasticsearch.plugin.zentity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Json;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.Response;
+import org.opensearch.client.Request;
+import org.opensearch.client.Response;
 import org.junit.Test;
 
 import java.util.Iterator;
