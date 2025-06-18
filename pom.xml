@@ -16,7 +16,7 @@
 
         <!-- zentity properties -->
         <zentity.author>Dave Moore</zentity.author>
-        <zentity.classname>org.opensearch.plugin.zentity.ZentityPlugin</zentity.classname>
+        <zentity.classname>org.opensearch.plugin.zentity.ZentityPluginMinimal</zentity.classname>
         <zentity.website>${project.url}</zentity.website>
         <zentity.version>1.8.3</zentity.version>
 
@@ -105,6 +105,16 @@
                     <!-- Exclude Elasticsearch plugin files during OpenSearch migration -->
                     <excludes>
                         <exclude>**/org/elasticsearch/plugin/zentity/**</exclude>
+                        <!-- Temporarily exclude problematic files for minimal testing -->
+                        <exclude>**/org/opensearch/plugin/zentity/ZentityPlugin.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/ModelsAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/ResolutionAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/SetupAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/BulkAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/HomeAction.java</exclude>
+                        <exclude>io/zentity/resolution/Query.java</exclude>
+                        <exclude>io/zentity/resolution/Job.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/ParamsUtil.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
