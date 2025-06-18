@@ -25,45 +25,52 @@ import org.opensearch.rest.BytesRestResponse;
 import org.opensearch.rest.RestRequest;
 import org.opensearch.core.rest.RestStatus;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 import static org.opensearch.rest.RestRequest.Method.GET;
-
 
 public class HomeAction extends BaseRestHandler {
 
     @Override
-    public List<Route> routes() {
-        return List.of(
-                new Route(GET, "_zentity")
-        );
-    }
-
-    @Override
     public String getName() {
-        return "zentity_plugin_action";
+        return "zentity_home_action";
     }
 
     @Override
-    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) {
+    public List<Route> routes() {
+        return unmodifiableList(asList(
+            new Route(GET, "/_zentity")
+        ));
+    }
 
-        Properties props = ZentityPlugin.properties();
+    @Override
+    protected RestChannelConsumer prepareRequest(RestRequest restRequest, NodeClient client) throws IOException {
+        Properties props = ZentityPluginMinimal.properties();
         Boolean pretty = restRequest.paramAsBoolean("pretty", false);
+        
         return channel -> {
-            XContentBuilder content = XContentFactory.jsonBuilder();
-            if (pretty)
-                content.prettyPrint();
-            content.startObject();
-            content.field("name", props.getProperty("name"));
-            content.field("description", props.getProperty("description"));
-            content.field("website", props.getProperty("zentity.website"));
-            content.startObject("version");
-            content.field("zentity", props.getProperty("zentity.version"));
-            content.field("elasticsearch", props.getProperty("opensearch.version"));
-            content.endObject();
-            content.endObject();
-            channel.sendResponse(new BytesRestResponse(RestStatus.OK, content));
+            try {
+                XContentBuilder content = XContentFactory.jsonBuilder();
+                if (pretty)
+                    content.prettyPrint();
+                content.startObject();
+                content.field("name", props.getProperty("name"));
+                content.field("description", props.getProperty("description"));
+                content.field("website", props.getProperty("zentity.website"));
+                content.startObject("version");
+                content.field("zentity", props.getProperty("zentity.version"));
+                content.field("opensearch", props.getProperty("opensearch.version"));
+                content.endObject();
+                content.endObject();
+                
+                channel.sendResponse(new BytesRestResponse(RestStatus.OK, content));
+            } catch (Exception e) {
+                channel.sendResponse(new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
+            }
         };
     }
 }
