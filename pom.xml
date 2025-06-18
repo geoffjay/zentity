@@ -22,8 +22,9 @@
 
         <!-- Dependency versions -->
         <opensearch.version>2.17.0</opensearch.version>
-        <jackson.core.version>2.17.0</jackson.core.version>
-        <jackson.databind.version>2.17.0</jackson.databind.version>
+        <jackson.core.version>2.17.2</jackson.core.version>
+        <jackson.databind.version>2.17.2</jackson.databind.version>
+        <jackson.annotations.version>2.17.2</jackson.annotations.version>
         <jdk.version>1.17</jdk.version>
         <commons-io.version>2.16.1</commons-io.version>
         <testcontainers.version>1.16.0</testcontainers.version>
@@ -71,6 +72,12 @@
             <version>${jackson.databind.version}</version>
             <scope>provided</scope><!-- Provided by OpenSearch -->
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.annotations.version}</version>
+            <scope>provided</scope><!-- Provided by OpenSearch -->
+        </dependency>
 
         <!-- Test infrastructure -->
         <dependency>
@@ -107,7 +114,7 @@
                         <exclude>**/org/elasticsearch/plugin/zentity/**</exclude>
                         <!-- Temporarily exclude problematic files for minimal testing -->
                                                   <exclude>**/org/opensearch/plugin/zentity/ZentityPlugin.java</exclude>
-                          <exclude>**/org/opensearch/plugin/zentity/ModelsAction.java</exclude>
+
                           <exclude>**/org/opensearch/plugin/zentity/ResolutionAction.java</exclude>
                                                   <exclude>**/org/opensearch/plugin/zentity/SetupAction.java</exclude>
                           <exclude>**/org/opensearch/plugin/zentity/BulkAction.java</exclude>

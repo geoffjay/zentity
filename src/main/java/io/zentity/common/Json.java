@@ -29,9 +29,33 @@ import java.util.TreeMap;
 
 public class Json {
 
-    public static final ObjectMapper MAPPER = new ObjectMapper();
-    public static final ObjectMapper ORDERED_MAPPER = new ObjectMapper().configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-    private static final JsonStringEncoder STRING_ENCODER = new JsonStringEncoder();
+    public static final ObjectMapper MAPPER = createObjectMapper();
+    public static final ObjectMapper ORDERED_MAPPER = createOrderedObjectMapper();
+    private static final JsonStringEncoder STRING_ENCODER = createJsonStringEncoder();
+    
+    private static ObjectMapper createObjectMapper() {
+        try {
+            return new ObjectMapper();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create ObjectMapper", e);
+        }
+    }
+    
+    private static ObjectMapper createOrderedObjectMapper() {
+        try {
+            return new ObjectMapper().configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create ordered ObjectMapper", e);
+        }
+    }
+    
+    private static JsonStringEncoder createJsonStringEncoder() {
+        try {
+            return new JsonStringEncoder();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create JsonStringEncoder", e);
+        }
+    }
 
     public static String quoteString(String value) {
         return jsonStringFormat(value);

@@ -89,7 +89,46 @@ public class ZentityPluginMinimal extends Plugin implements ActionPlugin {
             Supplier<DiscoveryNodes> nodesInCluster) {
         
         return List.of(
-            new HomeAction()
+            new HomeAction(),
+            new ModelsAction()
         );
+    }
+    
+    // Static utility methods for response handling
+    public static void sendResponse(org.opensearch.rest.RestChannel channel, String content) {
+        try {
+            channel.sendResponse(new org.opensearch.rest.BytesRestResponse(org.opensearch.core.rest.RestStatus.OK, "application/json", content));
+        } catch (Exception e) {
+            sendResponseError(channel, org.apache.logging.log4j.LogManager.getLogger(ZentityPluginMinimal.class), e);
+        }
+    }
+    
+    public static void sendResponse(org.opensearch.rest.RestChannel channel, org.opensearch.core.xcontent.XContentBuilder content) {
+        try {
+            channel.sendResponse(new org.opensearch.rest.BytesRestResponse(org.opensearch.core.rest.RestStatus.OK, content));
+        } catch (Exception e) {
+            sendResponseError(channel, org.apache.logging.log4j.LogManager.getLogger(ZentityPluginMinimal.class), e);
+        }
+    }
+    
+    public static void sendResponseError(org.opensearch.rest.RestChannel channel, org.apache.logging.log4j.Logger logger, Exception e) {
+        try {
+            org.opensearch.core.rest.RestStatus status = org.opensearch.core.rest.RestStatus.INTERNAL_SERVER_ERROR;
+            
+            // Map specific exception types to appropriate HTTP status codes
+            if (e instanceof NotFoundException) {
+                status = org.opensearch.core.rest.RestStatus.NOT_FOUND;
+            } else if (e instanceof ForbiddenException) {
+                status = org.opensearch.core.rest.RestStatus.FORBIDDEN;
+            } else if (e instanceof NotImplementedException) {
+                status = org.opensearch.core.rest.RestStatus.NOT_IMPLEMENTED;
+            } else if (e instanceof io.zentity.model.ValidationException) {
+                status = org.opensearch.core.rest.RestStatus.BAD_REQUEST;
+            }
+            
+            channel.sendResponse(new org.opensearch.rest.BytesRestResponse(status, e.getMessage()));
+        } catch (Exception sendException) {
+            logger.error("Failed to send error response", sendException);
+        }
     }
 } 

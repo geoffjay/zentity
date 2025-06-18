@@ -92,6 +92,20 @@ public class StringsUtil {
     }
     
     /**
+     * Converts an XContentBuilder to its string representation.
+     * 
+     * @param builder the XContentBuilder to convert to string
+     * @return the string representation
+     */
+    public static String toString(XContentBuilder builder) {
+        try {
+            return builder.toString();
+        } catch (Exception e) {
+            return "{}";
+        }
+    }
+    
+    /**
      * Joins an array of strings with a delimiter.
      * 
      * @param array the array of strings to join

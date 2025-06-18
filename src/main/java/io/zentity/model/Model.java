@@ -20,6 +20,10 @@ package io.zentity.model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Json;
+import org.opensearch.core.xcontent.XContentParser;
+import org.opensearch.common.xcontent.XContentType;
+import org.opensearch.core.xcontent.DeprecationHandler;
+import org.opensearch.core.xcontent.NamedXContentRegistry;
 import io.zentity.common.Patterns;
 import org.opensearch.OpenSearchException;
 import org.opensearch.plugin.zentity.StringsUtil;
@@ -237,7 +241,11 @@ public class Model {
     }
 
     public void deserialize(String json) throws ValidationException, IOException {
-        deserialize(Json.MAPPER.readTree(json));
+        try (XContentParser parser = XContentType.JSON.xContent()
+                .createParser(NamedXContentRegistry.EMPTY, DeprecationHandler.THROW_UNSUPPORTED_OPERATION, json)) {
+            JsonNode jsonNode = Json.MAPPER.readTree(json);
+            deserialize(jsonNode);
+        }
     }
 
 }
