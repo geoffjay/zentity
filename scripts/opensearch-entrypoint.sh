@@ -28,10 +28,33 @@ install_plugin_if_needed() {
     fi
 }
 
+# Function to install zentity plugin from file
+install_zentity_plugin() {
+    local plugin_file="/opt/zentity/releases/zentity-1.8.3-opensearch-2.17.0.zip"
+    
+    echo "Checking zentity plugin..."
+    
+    if is_plugin_installed "zentity"; then
+        echo "✓ Zentity plugin is already installed"
+    else
+        if [ -f "$plugin_file" ]; then
+            echo "Installing zentity plugin from: $plugin_file"
+            $PLUGIN_BIN install --batch "file://$plugin_file"
+            echo "✓ Zentity plugin installed successfully"
+        else
+            echo "⚠ Zentity plugin file not found at: $plugin_file"
+            echo "  Skipping zentity plugin installation"
+        fi
+    fi
+}
+
 # Install required plugins
 echo "Installing required OpenSearch plugins..."
 install_plugin_if_needed "analysis-icu"
 install_plugin_if_needed "analysis-phonetic"
+
+# Install zentity plugin
+install_zentity_plugin
 
 echo "=== Plugin installation complete ==="
 echo "Installed plugins:"

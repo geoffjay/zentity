@@ -73,6 +73,38 @@ public class Attribute {
         this.deserialize(json);
     }
 
+    /**
+     * Constructor for creating Attribute directly from parsed values without JSON.
+     * This avoids Jackson dependencies entirely.
+     */
+    public Attribute(String name, String type, Double score, Map<String, String> params, boolean validateRunnable) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        this.nameFields = this.parseNameFields(name);
+        this.validateRunnable = validateRunnable;
+        
+        // Set type with validation
+        if (type != null) {
+            if (!VALID_TYPES.contains(type)) {
+                throw new ValidationException("'attributes." + this.name + ".type' has an unrecognized type '" + type + "'.");
+            }
+            this.type = type;
+        }
+        
+        // Set score with validation
+        if (score != null) {
+            if (score < 0.0 || score > 1.0) {
+                throw new ValidationException("'attributes." + this.name + ".score' must be a floating point number in the range of 0.0 - 1.0. Integer values of 0 or 1 are acceptable.");
+            }
+            this.score = score;
+        }
+        
+        // Set params
+        if (params != null) {
+            this.params.putAll(params);
+        }
+    }
+
     public String name() {
         return this.name;
     }

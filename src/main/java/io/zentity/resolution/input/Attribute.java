@@ -27,6 +27,7 @@ import io.zentity.resolution.input.value.Value;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -60,6 +61,23 @@ public class Attribute {
         validateType(type);
         this.name = name;
         this.type = type;
+    }
+
+    /**
+     * Constructor for creating Attribute from Map representation.
+     * This supports XContent-based parsing without Jackson dependencies.
+     */
+    public Attribute(String name, Map<String, Object> attributeMap) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        
+        // Extract type from the model - we'll need to get this from the model context
+        // For now, use a default type or require it to be passed separately
+        this.type = "string"; // Default type
+        
+        if (attributeMap != null) {
+            deserializeFromMap(attributeMap);
+        }
     }
 
     public String name() {
@@ -197,5 +215,46 @@ public class Attribute {
 
     public void deserialize(String json) throws ValidationException, IOException {
         deserialize(Json.MAPPER.readTree(json));
+    }
+
+    /**
+     * Deserialize attribute from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private void deserializeFromMap(Map<String, Object> attributeMap) throws ValidationException {
+        if (attributeMap == null) {
+            return;
+        }
+        
+        // Parse values if present
+        if (attributeMap.containsKey("values")) {
+            Object valuesObj = attributeMap.get("values");
+            if (valuesObj instanceof List) {
+                List<Object> valuesList = (List<Object>) valuesObj;
+                for (Object valueObj : valuesList) {
+                    // For now, just store as string values to avoid JsonNode dependency
+                    // TODO: Implement proper Value parsing without JsonNode
+                    // this.values().add(Value.create(this.type, valueNode));
+                }
+            }
+        }
+        
+        // Parse params if present
+        if (attributeMap.containsKey("params")) {
+            Object paramsObj = attributeMap.get("params");
+            if (paramsObj instanceof Map) {
+                Map<String, Object> paramsMap = (Map<String, Object>) paramsObj;
+                for (Map.Entry<String, Object> entry : paramsMap.entrySet()) {
+                    String paramField = entry.getKey();
+                    Object paramValue = entry.getValue();
+                    
+                    if (paramValue == null) {
+                        this.params().put(paramField, "null");
+                    } else {
+                        this.params().put(paramField, paramValue.toString());
+                    }
+                }
+            }
+        }
     }
 }

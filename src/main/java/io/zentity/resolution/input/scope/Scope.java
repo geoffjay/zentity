@@ -19,6 +19,7 @@ package io.zentity.resolution.input.scope;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Json;
+import io.zentity.common.XContentJson;
 import io.zentity.model.Model;
 import io.zentity.model.ValidationException;
 
@@ -67,6 +68,44 @@ public class Scope {
 
     public void deserialize(String json, Model model) throws ValidationException, IOException {
         deserialize(Json.MAPPER.readTree(json), model);
+    }
+    
+    /**
+     * Deserialize scope from a Map representation.
+     * This method provides XContent-based parsing without Jackson dependencies.
+     */
+    @SuppressWarnings("unchecked")
+    public void deserializeFromMap(Map<String, Object> scopeMap, Model model) throws ValidationException, IOException {
+        if (scopeMap == null) {
+            return; // Empty scope is valid
+        }
+
+        // Parse and validate the "scope.exclude" and "scope.include" fields
+        for (Map.Entry<String, Object> entry : scopeMap.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            
+            switch (name) {
+                case "exclude":
+                    if (value instanceof Map) {
+                        Map<String, Object> excludeMap = (Map<String, Object>) value;
+                        this.exclude.deserializeFromMap(excludeMap, model);
+                    } else if (value != null) {
+                        throw new ValidationException("'scope.exclude' must be an object.");
+                    }
+                    break;
+                case "include":
+                    if (value instanceof Map) {
+                        Map<String, Object> includeMap = (Map<String, Object>) value;
+                        this.include.deserializeFromMap(includeMap, model);
+                    } else if (value != null) {
+                        throw new ValidationException("'scope.include' must be an object.");
+                    }
+                    break;
+                default:
+                    throw new ValidationException("'scope." + name + "' is not a recognized field.");
+            }
+        }
     }
 }
 

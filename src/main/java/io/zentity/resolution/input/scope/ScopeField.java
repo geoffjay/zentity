@@ -20,6 +20,7 @@ package io.zentity.resolution.input.scope;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Json;
+import io.zentity.common.XContentJson;
 import io.zentity.model.Model;
 import io.zentity.model.ValidationException;
 import io.zentity.resolution.input.Attribute;
@@ -167,5 +168,11 @@ public abstract class ScopeField {
     public void deserialize(String json, Model model) throws ValidationException, IOException {
         deserialize(Json.MAPPER.readTree(json), model);
     }
+
+    /**
+     * Abstract method for deserializing from Map representation.
+     * This method provides XContent-based parsing without Jackson dependencies.
+     */
+    public abstract void deserializeFromMap(Map<String, Object> scopeMap, Model model) throws ValidationException, IOException;
 
 }

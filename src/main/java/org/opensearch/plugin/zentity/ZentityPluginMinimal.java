@@ -90,7 +90,8 @@ public class ZentityPluginMinimal extends Plugin implements ActionPlugin {
         
         return List.of(
             new HomeAction(),
-            new ModelsAction()
+            new ModelsAction(),
+            new ResolutionAction()
         );
     }
     
