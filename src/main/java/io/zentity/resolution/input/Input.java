@@ -17,16 +17,22 @@
  */
 package io.zentity.resolution.input;
 
-import io.zentity.common.XContentJson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Patterns;
+import io.zentity.common.XContentJson;
 import io.zentity.model.Index;
 import io.zentity.model.Model;
 import io.zentity.model.ValidationException;
+import io.zentity.resolution.input.scope.Include;
+import io.zentity.resolution.input.scope.Exclude;
 import io.zentity.resolution.input.scope.Scope;
 import io.zentity.resolution.input.value.Value;
 import io.zentity.resolution.input.value.StringValue;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -286,12 +292,11 @@ public class Input {
             if (attributeValue instanceof List) {
                 // Array format: {"first_name": ["Alice"]}
                 List<Object> valuesList = (List<Object>) attributeValue;
-                for (Object value : valuesList) {
-                    if (value != null) {
-                        // Temporary workaround: validate but don't store values
-                        addSimpleStringValue(attribute, value.toString());
-                    }
-                }
+                                        for (Object value : valuesList) {
+                            if (value != null) {
+                                addSimpleStringValue(attribute, value.toString());
+                            }
+                        }
             } else if (attributeValue instanceof Map) {
                 // Object format: {"first_name": {"values": ["Alice"], "params": {...}}}
                 Map<String, Object> attributeObjectMap = (Map<String, Object>) attributeValue;
@@ -303,7 +308,6 @@ public class Input {
                         List<Object> valuesList = (List<Object>) valuesObj;
                         for (Object value : valuesList) {
                             if (value != null) {
-                                // Temporary workaround: validate but don't store values
                                 addSimpleStringValue(attribute, value.toString());
                             }
                         }
@@ -443,11 +447,51 @@ public class Input {
     }
 
     /**
-     * Add a simple string value to an attribute (temporary workaround).
+     * Add a value to an attribute.
      */
-    private void addSimpleStringValue(Attribute attribute, String valueString) {
-        // Temporarily disabled during OpenSearch migration
-        // TODO: Implement XContent-based Value parsing
-        // For now, we just validate the input without storing values
+    private void addSimpleStringValue(Attribute attribute, String valueString) throws ValidationException {
+        // Get the attribute type from the model
+        String attributeType = "string"; // Default type
+        if (this.model.attributes().containsKey(attribute.name())) {
+            attributeType = this.model.attributes().get(attribute.name()).type();
+        }
+        
+        // Create the appropriate Value object based on the attribute type
+        Object parsedValue = parseValueByType(valueString, attributeType);
+        Value value = Value.create(attributeType, parsedValue);
+        attribute.values().add(value);
+    }
+    
+    /**
+     * Parse a string value according to the specified attribute type.
+     */
+    private Object parseValueByType(String valueString, String attributeType) throws ValidationException {
+        if (valueString == null || "null".equals(valueString)) {
+            return null;
+        }
+        
+        try {
+            switch (attributeType) {
+                case "boolean":
+                    return Boolean.parseBoolean(valueString);
+                case "number":
+                    // Try to parse as the most appropriate number type
+                    if (valueString.contains(".")) {
+                        return Double.parseDouble(valueString);
+                    } else {
+                        try {
+                            return Integer.parseInt(valueString);
+                        } catch (NumberFormatException e) {
+                            return Long.parseLong(valueString);
+                        }
+                    }
+                case "date":
+                case "string":
+                default:
+                    return valueString;
+            }
+        } catch (NumberFormatException e) {
+            throw new ValidationException("Cannot parse '" + valueString + "' as " + attributeType + ": " + e.getMessage());
+        }
     }
 }

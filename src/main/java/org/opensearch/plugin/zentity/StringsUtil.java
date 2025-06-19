@@ -17,85 +17,27 @@
  */
 package org.opensearch.plugin.zentity;
 
-import org.opensearch.core.xcontent.ToXContent;
 import org.opensearch.core.xcontent.XContentBuilder;
-import org.opensearch.common.xcontent.XContentType;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * Utility class to replace missing or changed OpenSearch Strings functionality.
- * This provides compatibility for OpenSearch 2.17 where some Strings methods
- * have been removed or changed signature.
+ * String utility methods for OpenSearch migration.
  */
 public class StringsUtil {
-    
-    /**
-     * Invalid filename characters that should not be used in filenames.
-     * Based on common filesystem restrictions.
-     */
+
     public static final String INVALID_FILENAME_CHARS = "\\/:*?\"<>|";
-    
+
     /**
-     * Validates if a string is a valid filename.
-     * 
-     * @param filename the filename to validate
-     * @return true if the filename is valid, false otherwise
+     * Join a collection of strings with a delimiter.
      */
-    public static boolean validFileName(String filename) {
-        if (filename == null || filename.isEmpty()) {
-            return false;
-        }
-        
-        // Check for invalid characters
-        for (char c : INVALID_FILENAME_CHARS.toCharArray()) {
-            if (filename.indexOf(c) >= 0) {
-                return false;
-            }
-        }
-        
-        // Check for reserved names on Windows
-        String[] reservedNames = {"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", 
-                                 "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", 
-                                 "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
-        String upperName = filename.toUpperCase();
-        for (String reserved : reservedNames) {
-            if (upperName.equals(reserved) || upperName.startsWith(reserved + ".")) {
-                return false;
-            }
-        }
-        
-        // Check for names that start or end with dot or space
-        if (filename.startsWith(".") || filename.endsWith(".") || 
-            filename.startsWith(" ") || filename.endsWith(" ")) {
-            return false;
-        }
-        
-        return true;
+    public static String join(List<String> strings, String delimiter) {
+        return String.join(delimiter, strings);
     }
-    
+
     /**
-     * Converts a ToXContent object to its string representation using JSON format.
-     * This replaces the OpenSearch 2.17 Strings.toString() method that now requires MediaType.
-     * 
-     * @param toXContent the object to convert to string
-     * @return the string representation
-     * @throws IOException if there's an error during conversion
-     */
-    public static String toString(ToXContent toXContent) throws IOException {
-        try (XContentBuilder builder = XContentType.JSON.contentBuilder()) {
-            toXContent.toXContent(builder, ToXContent.EMPTY_PARAMS);
-            return builder.toString();
-        }
-    }
-    
-    /**
-     * Converts an XContentBuilder to its string representation.
-     * 
-     * @param builder the XContentBuilder to convert to string
-     * @return the string representation
+     * Convert XContentBuilder to string.
      */
     public static String toString(XContentBuilder builder) {
         try {
@@ -104,82 +46,21 @@ public class StringsUtil {
             return "{}";
         }
     }
-    
+
     /**
-     * Joins an array of strings with a delimiter.
-     * 
-     * @param array the array of strings to join
-     * @param delimiter the delimiter to use
-     * @return the joined string
+     * Check if a filename is valid (doesn't contain invalid characters).
      */
-    public static String join(String[] array, String delimiter) {
-        if (array == null || array.length == 0) {
-            return "";
+    public static boolean validFileName(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return false;
         }
         
-        if (array.length == 1) {
-            return array[0] == null ? "" : array[0];
+        for (char c : INVALID_FILENAME_CHARS.toCharArray()) {
+            if (filename.indexOf(c) >= 0) {
+                return false;
+            }
         }
         
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < array.length; i++) {
-            if (i > 0) {
-                sb.append(delimiter);
-            }
-            if (array[i] != null) {
-                sb.append(array[i]);
-            }
-        }
-        return sb.toString();
+        return true;
     }
-    
-    /**
-     * Joins an array of strings without a delimiter.
-     * 
-     * @param array the array of strings to join
-     * @return the joined string
-     */
-    public static String join(String[] array) {
-        return join(array, "");
-    }
-    
-    /**
-     * Joins a list of strings with a delimiter.
-     * 
-     * @param list the list of strings to join
-     * @param delimiter the delimiter to use
-     * @return the joined string
-     */
-    public static String join(List<String> list, String delimiter) {
-        if (list == null || list.isEmpty()) {
-            return "";
-        }
-        
-        if (list.size() == 1) {
-            String item = list.get(0);
-            return item == null ? "" : item;
-        }
-        
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            if (i > 0) {
-                sb.append(delimiter);
-            }
-            String item = list.get(i);
-            if (item != null) {
-                sb.append(item);
-            }
-        }
-        return sb.toString();
-    }
-    
-    /**
-     * Joins a list of strings without a delimiter.
-     * 
-     * @param list the list of strings to join
-     * @return the joined string
-     */
-    public static String join(List<String> list) {
-        return join(list, "");
-    }
-} 
+}
