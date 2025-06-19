@@ -812,6 +812,450 @@ mvn clean package -DskipTests -Dmaven.test.skip=true
 - **Plugin Infrastructure**: Deferred to final integration phase
 - **Overall Migration**: 98% complete (core functionality + XContent migration)
 
+## Phase 4.6: Cross-Index Resolution Issue Resolution (Week 9.5-10)
+
+### 4.6.1 Cross-Index Resolution Issue Analysis
+
+**Priority**: Critical  
+**Risk**: High  
+**Estimated Time**: 1 day
+
+**Issue Discovery**: During comprehensive testing of cross-index resolution functionality using author-provided tutorials, incorrect results were identified. While the resolution API is functional and returning results from multiple indices, the accuracy and consistency of cross-index entity linking is compromised.
+
+**Root Cause Analysis**:
+
+**Primary Issue: Input.Attribute JsonNode Dependencies**
+```java
+// PROBLEMATIC CODE in Input.Attribute.deserialize(JsonNode)
+while (valuesNode.hasNext()) {
+    JsonNode valueNode = valuesNode.next();
+    this.values().add(Value.create(this.type, valueNode)); // JsonNode passed directly
+}
+```
+- **Impact**: JsonNode objects passed to Value.create() instead of underlying Java objects
+- **Consequence**: Inconsistent value representation between input parsing paths
+- **Cross-Index Effect**: Different indices may use different parsing paths, causing matching failures
+
+**Secondary Issue: Incomplete Map-based Value Storage**
+```java
+// INCOMPLETE CODE in Input.Attribute.deserializeFromMap()
+// TODO: Implement proper Value parsing without JsonNode
+// this.values().add(Value.create(this.type, valueNode));
+```
+- **Impact**: Map-based parsing (XContent) doesn't store values properly
+- **Consequence**: Attributes parsed via XContent have no values for resolution
+- **Cross-Index Effect**: Resolution queries built without proper attribute values
+
+**Tertiary Issues Identified**:
+1. **Query Generation Logic Complexity**: Complex resolver weight handling may produce incorrect query structures when value representations are inconsistent
+2. **Hop Traversal State Management**: Attribute propagation between indices affected by mixed JsonNode/XContent parsing
+3. **Index Field Matcher Validation**: Subtle differences in value handling between indices during migration
+
+**Symptoms Observed**:
+- ✅ Cross-index resolution API functional (returns results from multiple indices)
+- ❌ Result accuracy compromised (incorrect entity matching)
+- ❌ Inconsistent behavior between similar queries on different indices
+- ❌ Potential missing entities that should be linked across indices
+
+### 4.6.2 Input.Attribute JsonNode Migration
+
+**Priority**: Critical  
+**Risk**: High  
+**Estimated Time**: 1-2 days
+
+**Strategy**: Complete the JsonNode to XContent migration for Input.Attribute value parsing
+
+**Phase 4.6.2.1: Add JsonNode to Object Conversion Helper**
+```java
+// Add to Input.Attribute class
+/**
+ * Convert JsonNode to appropriate Java Object for Value creation.
+ * This method helps with the Jackson to XContent migration.
+ */
+private static Object jsonNodeToObject(JsonNode node) {
+    if (node == null || node.isNull() || node.isMissingNode()) {
+        return null;
+    }
+    if (node.isTextual()) {
+        return node.asText();
+    }
+    if (node.isBoolean()) {
+        return node.asBoolean();
+    }
+    if (node.isNumber()) {
+        if (node.isInt()) {
+            return node.asInt();
+        } else if (node.isLong()) {
+            return node.asLong();
+        } else if (node.isDouble()) {
+            return node.asDouble();
+        } else if (node.isFloat()) {
+            return node.asFloat();
+        } else {
+            return node.numberValue();
+        }
+    }
+    // For arrays and objects, convert to string representation
+    return node.toString();
+}
+```
+
+**Phase 4.6.2.2: Update JsonNode Value Creation**
+```java
+// BEFORE:
+this.values().add(Value.create(this.type, valueNode));
+
+// AFTER:
+this.values().add(Value.create(this.type, jsonNodeToObject(valueNode)));
+```
+
+**Files Requiring Updates**:
+- `src/main/java/io/zentity/resolution/input/Attribute.java` (deserialize method)
+
+**Validation**:
+```bash
+# Compile after changes
+mvn clean package -DskipTests -Dmaven.test.skip=true
+
+# Test cross-index resolution consistency
+curl -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+     -H 'Content-Type: application/json' \
+     -d '{"attributes":{"attribute_a":["a_00"]},"scope":{"include":{"indices":["zentity_test_index_a","zentity_test_index_b"]}}}'
+```
+
+### 4.6.3 Complete Map-based Value Storage Implementation
+
+**Priority**: Critical  
+**Risk**: Medium  
+**Estimated Time**: 1 day
+
+**Strategy**: Implement proper Value object creation in the Map-based parsing path
+
+**Phase 4.6.3.1: Complete deserializeFromMap Implementation**
+```java
+// BEFORE (incomplete):
+// TODO: Implement proper Value parsing without JsonNode
+// this.values().add(Value.create(this.type, valueNode));
+
+// AFTER (complete):
+@SuppressWarnings("unchecked")
+private void deserializeFromMap(Map<String, Object> attributeMap) throws ValidationException {
+    if (attributeMap == null) {
+        return;
+    }
+    
+    // Parse values if present
+    if (attributeMap.containsKey("values")) {
+        Object valuesObj = attributeMap.get("values");
+        if (valuesObj instanceof List) {
+            List<Object> valuesList = (List<Object>) valuesObj;
+            for (Object valueObj : valuesList) {
+                if (valueObj != null) {
+                    Value value = Value.create(this.type, valueObj);
+                    this.values().add(value);
+                }
+            }
+        }
+    }
+    
+    // Parse params if present (already implemented)
+    if (attributeMap.containsKey("params")) {
+        Object paramsObj = attributeMap.get("params");
+        if (paramsObj instanceof Map) {
+            Map<String, Object> paramsMap = (Map<String, Object>) paramsObj;
+            for (Map.Entry<String, Object> entry : paramsMap.entrySet()) {
+                String paramField = entry.getKey();
+                Object paramValue = entry.getValue();
+                
+                if (paramValue == null) {
+                    this.params().put(paramField, "null");
+                } else {
+                    this.params().put(paramField, paramValue.toString());
+                }
+            }
+        }
+    }
+}
+```
+
+**Validation Strategy**:
+```bash
+# Test both JsonNode and Map parsing paths
+# Ensure identical Value objects created regardless of input method
+```
+
+### 4.6.4 Cross-Index Resolution Validation Framework
+
+**Priority**: High  
+**Risk**: Medium  
+**Estimated Time**: 1 day
+
+**Strategy**: Create systematic testing to validate cross-index resolution accuracy
+
+**Phase 4.6.4.1: Cross-Index Test Suite**
+```bash
+#!/bin/bash
+# scripts/test-cross-index-resolution.sh
+
+echo "Testing Cross-Index Resolution Accuracy..."
+
+# Test 1: Basic cross-index linking
+echo "Test 1: Basic cross-index entity linking"
+RESULT1=$(curl -s -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+    -H 'Content-Type: application/json' \
+    -d '{"attributes":{"attribute_a":["a_00"]},"scope":{"include":{"indices":["zentity_test_index_a","zentity_test_index_b"]}}}')
+
+# Validate results from both indices
+INDEX_A_COUNT=$(echo "$RESULT1" | jq '.hits.hits | map(select(._index == "zentity_test_index_a")) | length')
+INDEX_B_COUNT=$(echo "$RESULT1" | jq '.hits.hits | map(select(._index == "zentity_test_index_b")) | length')
+
+echo "Index A results: $INDEX_A_COUNT"
+echo "Index B results: $INDEX_B_COUNT"
+
+# Test 2: Multi-hop cross-index resolution
+echo "Test 2: Multi-hop cross-index resolution"
+RESULT2=$(curl -s -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a?max_hops=2' \
+    -H 'Content-Type: application/json' \
+    -d '{"attributes":{"attribute_a":["a_00"],"attribute_d":["d_00"]}}')
+
+# Validate hop progression
+HOP_0_COUNT=$(echo "$RESULT2" | jq '.hits.hits | map(select(._hop == 0)) | length')
+HOP_1_COUNT=$(echo "$RESULT2" | jq '.hits.hits | map(select(._hop == 1)) | length')
+
+echo "Hop 0 results: $HOP_0_COUNT"
+echo "Hop 1 results: $HOP_1_COUNT"
+
+# Test 3: Resolver weight handling across indices
+echo "Test 3: Resolver weight consistency"
+RESULT3=$(curl -s -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+    -H 'Content-Type: application/json' \
+    -d '{"attributes":{"attribute_a":["a_00"],"attribute_b":["b_00"]},"scope":{"include":{"resolvers":["resolver_a","resolver_b"]}}}')
+
+# Validate resolver application
+echo "Multi-resolver results: $(echo "$RESULT3" | jq '.hits.total')"
+```
+
+**Phase 4.6.4.2: Result Accuracy Validation**
+```bash
+# Compare cross-index resolution results with expected entity relationships
+# Validate that entities with matching attributes across indices are properly linked
+# Ensure consistent confidence scoring across indices
+# Verify hop traversal follows expected entity relationship paths
+```
+
+### 4.6.5 Hop Traversal State Management Validation
+
+**Priority**: Medium  
+**Risk**: Medium  
+**Estimated Time**: 0.5 days
+
+**Strategy**: Validate attribute propagation consistency between hops and indices
+
+**Validation Points**:
+1. **Attribute Collection**: Ensure attributes collected from documents are properly typed
+2. **Value Representation**: Verify consistent Value objects across all hop stages
+3. **Resolver Evaluation**: Validate that canQueryResolver logic works identically across indices
+4. **Query Construction**: Ensure query generation produces equivalent results for equivalent inputs
+
+**Test Framework**:
+```bash
+# Enable debug logging for hop traversal
+# Trace attribute propagation between hops
+# Validate Value object consistency throughout resolution process
+# Compare query structures generated for different indices
+```
+
+### 4.6.6 Integration Testing and Validation
+
+**Priority**: Critical  
+**Risk**: Medium  
+**Estimated Time**: 1 day
+
+**Comprehensive Cross-Index Resolution Test Suite**:
+
+**Test Category 1: Basic Cross-Index Functionality**
+```bash
+# Single attribute cross-index resolution
+curl -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+     -H 'Content-Type: application/json' \
+     -d '{"attributes":{"attribute_a":["a_00"]},"scope":{"include":{"indices":["zentity_test_index_a","zentity_test_index_b","zentity_test_index_c","zentity_test_index_d"]}}}'
+
+# Expected: Results from all 4 indices with proper entity linking
+```
+
+**Test Category 2: Multi-Attribute Cross-Index Resolution**
+```bash
+# Multiple attributes with cross-index relationships
+curl -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+     -H 'Content-Type: application/json' \
+     -d '{"attributes":{"attribute_a":["a_00"],"attribute_b":["b_00"],"attribute_c":["c_00"]},"max_hops":3}'
+
+# Expected: Complex entity relationships resolved across multiple indices
+```
+
+**Test Category 3: Resolver Weight Cross-Index Behavior**
+```bash
+# Test resolver weight handling across indices
+curl -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+     -H 'Content-Type: application/json' \
+     -d '{"attributes":{"attribute_a":["a_00"]},"scope":{"include":{"resolvers":["resolver_a"]}}}'
+
+# Expected: Consistent resolver application regardless of source index
+```
+
+**Success Criteria**:
+- [ ] Cross-index entity linking produces accurate results
+- [ ] Value parsing consistency between JsonNode and Map paths
+- [ ] Hop traversal maintains attribute integrity across indices  
+- [ ] Resolver evaluation works identically across all indices
+- [ ] Performance maintains acceptable levels during cross-index operations
+- [ ] No regression in single-index resolution functionality
+
+### 4.6.7 Performance Impact Assessment
+
+**Priority**: Medium  
+**Risk**: Low  
+**Estimated Time**: 0.5 days
+
+**Validation**: Ensure cross-index resolution fixes don't impact performance
+
+**Benchmarks**:
+```bash
+# Before fixes
+time curl -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+     -H 'Content-Type: application/json' \
+     -d '{"attributes":{"attribute_a":["a_00"]}}'
+
+# After fixes  
+time curl -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+     -H 'Content-Type: application/json' \
+     -d '{"attributes":{"attribute_a":["a_00"]}}'
+
+# Cross-index performance
+time curl -X POST 'http://localhost:9201/_zentity/resolution/zentity_test_entity_a' \
+     -H 'Content-Type: application/json' \
+     -d '{"attributes":{"attribute_a":["a_00"]},"scope":{"include":{"indices":["zentity_test_index_a","zentity_test_index_b","zentity_test_index_c","zentity_test_index_d"]}}}'
+```
+
+**Performance Targets**:
+- Single-index resolution: < 5% performance regression
+- Cross-index resolution: Proportional to number of indices queried
+- Memory usage: No significant increase in baseline memory consumption
+
+### 4.6.8 Documentation Updates
+
+**Priority**: Medium  
+**Risk**: Low  
+**Estimated Time**: 0.5 days
+
+**Documentation Requirements**:
+
+**Technical Documentation**:
+```markdown
+# Cross-Index Resolution Migration Notes
+
+## Issues Resolved
+1. Input.Attribute JsonNode dependency elimination
+2. Map-based value storage completion  
+3. Value parsing consistency across input methods
+4. Cross-index hop traversal state management
+
+## API Behavior Changes
+- No user-facing API changes
+- Improved accuracy in cross-index entity resolution
+- Consistent results regardless of input parsing method
+
+## Testing Recommendations
+- Validate cross-index resolution results against expected entity relationships
+- Test with multiple resolver weights and complex attribute combinations
+- Verify hop traversal accuracy in multi-index scenarios
+```
+
+**User Documentation**:
+```markdown
+# Cross-Index Entity Resolution
+
+## Overview
+Cross-index entity resolution allows entities to be linked across multiple indices,
+enabling comprehensive entity identification across distributed data sources.
+
+## Best Practices
+- Use consistent attribute naming across indices
+- Configure appropriate resolver weights for cross-index relationships
+- Test resolution accuracy with representative data samples
+- Monitor performance with large-scale cross-index operations
+```
+
+### 4.6.9 Risk Assessment and Mitigation
+
+**High-Risk Areas**:
+
+**1. Value Parsing Consistency**
+- **Risk**: Different parsing paths producing different Value objects
+- **Mitigation**: Comprehensive unit tests for both JsonNode and Map parsing
+- **Validation**: Automated comparison of Value objects from different input methods
+
+**2. Cross-Index State Management**
+- **Risk**: Attribute propagation failures between hops affecting entity linking
+- **Mitigation**: Detailed logging and tracing of hop traversal
+- **Validation**: Multi-hop cross-index test scenarios
+
+**3. Resolver Logic Compatibility**
+- **Risk**: Resolver evaluation differences between indices due to value representation
+- **Mitigation**: Systematic testing of resolver logic with fixed test data
+- **Validation**: Resolver weight and attribute combination testing
+
+**Medium-Risk Areas**:
+
+**1. Performance Impact**
+- **Risk**: Value parsing changes affecting resolution performance
+- **Mitigation**: Performance benchmarking before and after changes
+- **Validation**: Automated performance regression testing
+
+**2. Backward Compatibility**
+- **Risk**: Changes affecting existing single-index resolution behavior
+- **Mitigation**: Comprehensive regression testing of existing functionality
+- **Validation**: Side-by-side comparison with pre-migration behavior
+
+### 4.6.10 Success Metrics
+
+**Technical Metrics**:
+- **Cross-Index Accuracy**: 100% of expected entity relationships identified
+- **Value Parsing Consistency**: Identical Value objects from JsonNode and Map inputs
+- **Performance**: < 5% regression in single-index resolution, proportional scaling for cross-index
+- **Hop Traversal**: Correct attribute propagation in 100% of multi-hop scenarios
+
+**Functional Metrics**:
+- **API Compatibility**: No breaking changes to existing API contracts
+- **Result Consistency**: Deterministic results for identical queries
+- **Error Handling**: Graceful handling of cross-index resolution edge cases
+- **Documentation**: Complete coverage of cross-index resolution behavior
+
+**Validation Framework**:
+```bash
+# Automated validation script
+#!/bin/bash
+# scripts/validate-cross-index-resolution.sh
+
+echo "Validating Cross-Index Resolution Migration..."
+
+# Run comprehensive test suite
+./scripts/test-cross-index-resolution.sh
+
+# Performance benchmarking
+./scripts/benchmark-resolution-performance.sh
+
+# Regression testing
+./scripts/regression-test-resolution.sh
+
+# Result accuracy validation
+./scripts/validate-entity-linking-accuracy.sh
+
+echo "Cross-Index Resolution Migration Validation Complete"
+```
+
+This phase ensures that cross-index entity resolution operates with the same accuracy and reliability as the original Elasticsearch implementation, while maintaining the performance and API compatibility established in previous migration phases.
+
 ## Phase 5: Documentation and Release Preparation (Week 11-12)
 
 ### 5.1 Documentation Updates
@@ -989,10 +1433,11 @@ mvn clean package -DskipTests -Dmaven.test.skip=true
 | 3: Testing Infrastructure | 2 weeks | Docker updates, integration test migration, security testing | Medium |
 | 4: Comprehensive Testing | 2 weeks | Full test suite, performance validation, regression testing | High |
 | 4.5: XContent Migration & Jackson Resolution | 1 week | IOException fixes, Jackson dependencies, XContent API migration | High |
+| 4.6: Cross-Index Resolution Issue Resolution | 1 week | Cross-index resolution issues analysis, input migration, validation framework | High |
 | 5: Documentation & Release | 2 weeks | Documentation, release preparation, migration guides | Low |
 
 **Total Duration**: 13 weeks  
-**Critical Path**: Core Migration → Integration Testing → Comprehensive Testing → XContent Migration  
+**Critical Path**: Core Migration → Integration Testing → Comprehensive Testing → XContent Migration → Cross-Index Resolution Issue Resolution  
 **Key Milestones**: 
 - Week 6: Core migration complete, basic compilation successful
 - Week 8: Integration tests passing, security configurations working
