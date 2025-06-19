@@ -17,7 +17,8 @@
  */
 package org.opensearch.plugin.zentity;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.json.JsonXContent;
 import io.zentity.common.AsyncCollectionRunner;
 import io.zentity.common.Json;
 import io.zentity.common.XContentJson;
@@ -531,7 +532,7 @@ public class ModelsAction extends BaseRestHandler {
      * @throws ValidationException
      * @throws IOException
      */
-    static void runOperation(NodeClient client, Method method, String body, Map<String, String> params, Map<String, String> reqParams, boolean isBulkRequest, ActionListener<XContentBuilder> onComplete) throws NotImplementedException, ValidationException, IOException {
+    static void runOperation(NodeClient client, Method method, String body, Map<String, String> params, Map<String, String> reqParams, boolean isBulkRequest, ActionListener<XContentBuilder> onComplete) throws ValidationException, IOException {
         final String entityType = ParamsUtil.optString(ModelsAction.PARAM_ENTITY_TYPE, null, params, reqParams);
         final boolean pretty = ParamsUtil.optBoolean(PARAM_PRETTY, DEFAULT_PRETTY, reqParams, emptyMap());
 
@@ -678,7 +679,7 @@ public class ModelsAction extends BaseRestHandler {
                 break;
 
             default:
-                throw new NotImplementedException("Method and endpoint not implemented.");
+                throw new BadRequestException("Method and endpoint not implemented.");
 
         }
     }
@@ -767,11 +768,10 @@ ZentityPluginMinimal.sendResponse(channel, content);
             String action = "action";
             String params = "";
             try {
-                Iterator<Map.Entry<String, JsonNode>> fields = Json.MAPPER.readTree(actionAndParams).fields();
-                while (fields.hasNext()) {
-                    Map.Entry<String, JsonNode> field = fields.next();
-                    String name = field.getKey();
-                    JsonNode value = field.getValue();
+                Map<String, Object> actionParamsMap = Json.parseToMap(actionAndParams);
+                for (Map.Entry<String, Object> entry : actionParamsMap.entrySet()) {
+                    String name = entry.getKey();
+                    Object value = entry.getValue();
                     switch (name) {
                         case "create":
                         case "update":
@@ -779,7 +779,11 @@ ZentityPluginMinimal.sendResponse(channel, content);
                             if (!action.equals("action"))
                                 throw new ValidationException("Each bulk operation must have only one action and payload.");
                             action = name;
-                            params = Json.ORDERED_MAPPER.writeValueAsString(value);
+                            // Convert the value back to JSON string using XContent
+                            try (XContentBuilder builder = JsonXContent.contentBuilder()) {
+                                builder.value(value);
+                                params = builder.toString();
+                            }
                             break;
                         default:
                             throw new ValidationException("'" + name + "' is not a recognized action for bulk model management.");

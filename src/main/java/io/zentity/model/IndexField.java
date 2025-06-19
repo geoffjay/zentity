@@ -76,6 +76,14 @@ public class IndexField {
         this.deserialize(json);
     }
 
+    public IndexField(String index, String name, Map<String, Object> map) throws ValidationException {
+        validateName(name);
+        this.index = index;
+        this.name = name;
+        this.nameToPath(name);
+        this.deserialize(map);
+    }
+
     public String index() {
         return this.index;
     }
@@ -196,6 +204,76 @@ public class IndexField {
 
     public void deserialize(String json) throws ValidationException, IOException {
         deserialize(Json.MAPPER.readTree(json));
+    }
+
+    /**
+     * Deserialize from a Map representation (XContent migration).
+     * 
+     * @param map The index field map from XContent parsing.
+     * @throws ValidationException If validation fails.
+     */
+    @SuppressWarnings("unchecked") 
+    public void deserialize(Map<String, Object> map) throws ValidationException {
+        if (map == null) {
+            throw new ValidationException("'indices." + this.index + ".fields." + this.name + "' must be an object.");
+        }
+
+        // Validate the existence of required fields
+        for (String field : REQUIRED_FIELDS) {
+            if (!map.containsKey(field)) {
+                throw new ValidationException("'indices." + this.index + ".fields." + this.name + "' is missing required field '" + field + "'.");
+            }
+        }
+
+        // Process each field in the map
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            
+            switch (name) {
+                case "attribute":
+                    if (!(value instanceof String)) {
+                        throw new ValidationException("'indices." + this.index + ".fields." + this.name + ".attribute' must be a string.");
+                    }
+                    String attributeValue = (String) value;
+                    if (attributeValue.isEmpty()) {
+                        throw new ValidationException("'indices." + this.index + ".fields." + this.name + ".attribute' must not be empty.");
+                    }
+                    this.attribute = attributeValue;
+                    break;
+                    
+                case "matcher":
+                    if (value != null && !(value instanceof String)) {
+                        throw new ValidationException("'indices." + this.index + "." + this.name + ".matcher' must be a string.");
+                    }
+                    if (value instanceof String) {
+                        String matcherValue = (String) value;
+                        if (matcherValue.isEmpty()) {
+                            throw new ValidationException("'indices." + this.index + ".fields." + this.name + ".matcher' must not be empty.");
+                        }
+                        this.matcher = matcherValue;
+                    }
+                    break;
+                    
+                case "quality":
+                    if (value != null) {
+                        Double qualityValue;
+                        if (value instanceof Number) {
+                            qualityValue = ((Number) value).doubleValue();
+                        } else {
+                            throw new ValidationException("'indices." + this.index + ".fields." + this.name + ".quality' must be a floating point number in the range of 0.0 - 1.0. Integer values of 0 or 1 are acceptable.");
+                        }
+                        if (qualityValue < 0.0 || qualityValue > 1.0) {
+                            throw new ValidationException("'indices." + this.index + ".fields." + this.name + ".quality' must be a floating point number in the range of 0.0 - 1.0. Integer values of 0 or 1 are acceptable.");
+                        }
+                        this.quality = qualityValue;
+                    }
+                    break;
+                    
+                default:
+                    throw new ValidationException("'indices." + this.index + ".fields." + this.name + "." + name + "' is not a recognized field.");
+            }
+        }
     }
 
 }

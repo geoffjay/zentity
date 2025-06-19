@@ -173,7 +173,12 @@ public class Job {
                     resolversAttributes.add("\"" + attributeName + "\"");
                 attributesResolversSummary.add("\"" + resolverName + "\":{\"attributes\":[" +  String.join(",", resolversAttributes) + "]}");
             }
-            String attributesResolversFilterTreeLogged = Json.ORDERED_MAPPER.writeValueAsString(query.resolversFilterTreeGrouped());
+            String attributesResolversFilterTreeLogged;
+            try {
+                attributesResolversFilterTreeLogged = Json.ORDERED_MAPPER.writeValueAsString(query.resolversFilterTreeGrouped());
+            } catch (IOException e) {
+                attributesResolversFilterTreeLogged = "{}";
+            }
             filtersLoggedList.add("\"attributes\":{\"tree\":" + attributesResolversFilterTreeLogged + ",\"resolvers\":{" + String.join(",", attributesResolversSummary) + "}}");
         } else {
             filtersLoggedList.add("\"attributes\":null");
@@ -186,7 +191,12 @@ public class Job {
                     resolverAttributes.add("\"" + attributeName + "\"");
                 termsResolversSummary.add("\"" + resolverName + "\":{\"attributes\":[" +  String.join(",", resolverAttributes) + "]}");
             }
-            String termResolversFilterTreeLogged = Json.ORDERED_MAPPER.writeValueAsString(query.termResolversFilterTree());
+            String termResolversFilterTreeLogged;
+            try {
+                termResolversFilterTreeLogged = Json.ORDERED_MAPPER.writeValueAsString(query.termResolversFilterTree());
+            } catch (IOException e) {
+                termResolversFilterTreeLogged = "{}";
+            }
             filtersLoggedList.add("\"terms\":{\"tree\":{\"0\":" + termResolversFilterTreeLogged + "},\"resolvers\":{" + String.join(",", termsResolversSummary) + "}}");
         } else {
             filtersLoggedList.add("\"terms\":null");
@@ -895,7 +905,7 @@ public class Job {
                         // The last name field of the attribute contains the array of values.
                         ArrayNode docAttributeArrNode = docAttributesObjNode.putArray(lastNameField);
                         for (Value value : docAttributes.get(attributeName))
-                            docAttributeArrNode.add(value.value());
+                            Json.ORDERED_MAPPER.addToArrayNode(docAttributeArrNode, value.value());
                     }
                 }
 
@@ -1187,8 +1197,13 @@ public class Job {
         if (this.includeQueries || this.profile)
             responseParts.add("\"queries\":[" + queries + "]");
         response = "{" + String.join(",", responseParts) + "}";
-        if (this.pretty)
-            response = Json.pretty(response);
+        if (this.pretty) {
+            try {
+                response = Json.pretty(response);
+            } catch (IOException e) {
+                // If pretty formatting fails, just return the unformatted response
+            }
+        }
         return response;
     }
 

@@ -17,27 +17,26 @@
  */
 package io.zentity.resolution.input.value;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.model.ValidationException;
 
 public class BooleanValue extends Value {
 
     public final String type = "boolean";
 
-    public BooleanValue(JsonNode value) throws ValidationException {
+    public BooleanValue(Object value) throws ValidationException {
         super(value);
     }
 
     /**
-     * Serialize the attribute value from a JsonNode object to a String object.
+     * Serialize the attribute value from an Object to a String object.
      *
      * @return
      */
     @Override
-    public String serialize(JsonNode value) {
-        if (value.isNull())
+    public String serialize(Object value) {
+        if (value == null)
             return "null";
-        return value.asText();
+        return value.toString();
     }
 
     /**
@@ -47,8 +46,8 @@ public class BooleanValue extends Value {
      * @throws ValidationException
      */
     @Override
-    public void validate(JsonNode value) throws ValidationException {
-        if (!value.isBoolean() && !value.isNull())
+    public void validate(Object value) throws ValidationException {
+        if (value != null && !(value instanceof Boolean))
             throw new ValidationException("Expected '" + this.type + "' attribute data type.");
     }
 

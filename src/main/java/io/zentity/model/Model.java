@@ -366,33 +366,60 @@ public class Model {
     }
     
     /**
-     * Parse indices from Map representation (simplified).
+     * Parse indices from Map representation.
      */
     @SuppressWarnings("unchecked")
     private void parseIndicesFromMap(Map<String, Object> indicesMap) throws ValidationException {
-        // For now, just skip detailed Index parsing since it requires JsonNode
-        // This is sufficient for basic Input validation
-        // TODO: Implement full Index parsing from Map when needed
+        for (Map.Entry<String, Object> entry : indicesMap.entrySet()) {
+            String indexName = entry.getKey();
+            Object indexValue = entry.getValue();
+            
+            if (!(indexValue instanceof Map)) {
+                throw new ValidationException("'indices." + indexName + "' must be an object.");
+            }
+            
+            Map<String, Object> indexMap = (Map<String, Object>) indexValue;
+            Index index = new Index(indexName, indexMap);
+            this.indices.put(indexName, index);
+        }
     }
     
     /**
-     * Parse matchers from Map representation (simplified).
+     * Parse matchers from Map representation.
      */
     @SuppressWarnings("unchecked")
     private void parseMatchersFromMap(Map<String, Object> matchersMap) throws ValidationException {
-        // For now, just skip detailed Matcher parsing since it requires JsonNode
-        // This is sufficient for basic Input validation
-        // TODO: Implement full Matcher parsing from Map when needed
+        for (Map.Entry<String, Object> entry : matchersMap.entrySet()) {
+            String matcherName = entry.getKey();
+            Object matcherValue = entry.getValue();
+            
+            if (!(matcherValue instanceof Map)) {
+                throw new ValidationException("'matchers." + matcherName + "' must be an object.");
+            }
+            
+            Map<String, Object> matcherMap = (Map<String, Object>) matcherValue;
+            Matcher matcher = new Matcher(matcherName, matcherMap);
+            this.matchers.put(matcherName, matcher);
+        }
     }
     
     /**
-     * Parse resolvers from Map representation (simplified).
+     * Parse resolvers from Map representation.
      */
     @SuppressWarnings("unchecked")
     private void parseResolversFromMap(Map<String, Object> resolversMap) throws ValidationException {
-        // For now, just skip detailed Resolver parsing since it requires JsonNode
-        // This is sufficient for basic Input validation
-        // TODO: Implement full Resolver parsing from Map when needed
+        for (Map.Entry<String, Object> entry : resolversMap.entrySet()) {
+            String resolverName = entry.getKey();
+            Object resolverValue = entry.getValue();
+            
+            if (!(resolverValue instanceof Map)) {
+                throw new ValidationException("'resolvers." + resolverName + "' must be an object.");
+            }
+            
+            Map<String, Object> resolverMap = (Map<String, Object>) resolverValue;
+            Resolver resolver = new Resolver(resolverName, resolverMap);
+            this.resolvers.put(resolverName, resolver);
+        }
     }
 
 }

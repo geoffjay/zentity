@@ -46,7 +46,7 @@ public class Index {
         this.deserialize(json);
     }
 
-    public Index(String name, String json) throws ValidationException, IOException {
+    public Index(String name, String json) throws ValidationException {
         validateName(name);
         this.name = name;
         this.deserialize(json);
@@ -59,11 +59,17 @@ public class Index {
         this.deserialize(json);
     }
 
-    public Index(String name, String json, boolean validateRunnable) throws ValidationException, IOException {
+    public Index(String name, String json, boolean validateRunnable) throws ValidationException {
         validateName(name);
         this.name = name;
         this.validateRunnable = validateRunnable;
         this.deserialize(json);
+    }
+
+    public Index(String name, Map<String, Object> map) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        this.deserialize(map);
     }
 
     public String name() {
@@ -181,8 +187,76 @@ public class Index {
         }
     }
 
-    public void deserialize(String json) throws ValidationException, IOException {
-        deserialize(Json.MAPPER.readTree(json));
+    public void deserialize(String json) throws ValidationException {
+        try {
+            deserialize(Json.MAPPER.readTree(json));
+        } catch (IOException e) {
+            throw new ValidationException("Invalid JSON: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Deserialize from a Map representation (XContent migration).
+     * 
+     * @param map The index map from XContent parsing.
+     * @throws ValidationException If validation fails.
+     */
+    @SuppressWarnings("unchecked")
+    public void deserialize(Map<String, Object> map) throws ValidationException {
+        if (map == null) {
+            throw new ValidationException("'indices." + this.name + "' must be an object.");
+        }
+        
+        if (this.validateRunnable && map.isEmpty()) {
+            throw new ValidationException("'indices." + this.name + "' must not be empty in the entity model.");
+        }
+
+        // Validate the existence of required fields
+        for (String field : REQUIRED_FIELDS) {
+            if (!map.containsKey(field)) {
+                throw new ValidationException("'indices." + this.name + "' is missing required field '" + field + "'.");
+            }
+        }
+
+        // Process each field in the map
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            
+            switch (name) {
+                case "fields":
+                    if (!(value instanceof Map)) {
+                        throw new ValidationException("'indices." + this.name + ".fields' must be an object.");
+                    }
+                    Map<String, Object> fieldsMap = (Map<String, Object>) value;
+                    
+                    if (this.validateRunnable && fieldsMap.isEmpty()) {
+                        throw new ValidationException("'indices." + this.name + ".fields' must not be empty in the entity model.");
+                    }
+                    
+                    Map<String, IndexField> fields = new TreeMap<>();
+                    for (Map.Entry<String, Object> fieldEntry : fieldsMap.entrySet()) {
+                        String fieldName = fieldEntry.getKey();
+                        Object fieldObject = fieldEntry.getValue();
+                        
+                        if (fieldName.isEmpty()) {
+                            throw new ValidationException("'indices." + this.name + ".fields' has a field with an empty name.");
+                        }
+                        
+                        if (!(fieldObject instanceof Map)) {
+                            throw new ValidationException("'indices." + this.name + ".fields." + fieldName + "' must be an object.");
+                        }
+                        
+                        fields.put(fieldName, new IndexField(this.name, fieldName, (Map<String, Object>) fieldObject));
+                    }
+                    this.fields = fields;
+                    this.rebuildAttributeIndexFieldsMap();
+                    break;
+                    
+                default:
+                    throw new ValidationException("'indices." + this.name + "." + name + "' is not a recognized field.");
+            }
+        }
     }
 
 }

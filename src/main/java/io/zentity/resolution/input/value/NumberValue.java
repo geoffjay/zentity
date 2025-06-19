@@ -17,32 +17,26 @@
  */
 package io.zentity.resolution.input.value;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.model.ValidationException;
 
 public class NumberValue extends Value {
 
     public final String type = "number";
 
-    public NumberValue(JsonNode value) throws ValidationException {
+    public NumberValue(Object value) throws ValidationException {
         super(value);
     }
 
     /**
-     * Serialize the attribute value from a JsonNode object to a String object.
+     * Serialize the attribute value from an Object to a String object.
      *
      * @return
      */
     @Override
-    public String serialize(JsonNode value) {
-        if (value.isNull())
+    public String serialize(Object value) {
+        if (value == null)
             return "null";
-        else if (value.isIntegralNumber())
-            return value.bigIntegerValue().toString();
-        else if (value.isFloatingPointNumber())
-            return String.valueOf(value.doubleValue());
-        else
-            return value.numberValue().toString();
+        return value.toString();
     }
 
     /**
@@ -52,8 +46,8 @@ public class NumberValue extends Value {
      * @throws ValidationException
      */
     @Override
-    public void validate(JsonNode value) throws ValidationException {
-        if (!value.isNumber() && !value.isNull())
+    public void validate(Object value) throws ValidationException {
+        if (value != null && !(value instanceof Number))
             throw new ValidationException("Expected '" + this.type + "' attribute data type.");
     }
 }

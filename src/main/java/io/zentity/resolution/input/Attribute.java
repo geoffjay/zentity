@@ -204,8 +204,13 @@ public class Attribute {
             Map.Entry<String, JsonNode> paramNode = paramsNode.next();
             String paramField = paramNode.getKey();
             JsonNode paramValue = paramNode.getValue();
-            if (paramValue.isObject() || paramValue.isArray())
-                this.params().put(paramField, Json.MAPPER.writeValueAsString(paramValue));
+            if (paramValue.isObject() || paramValue.isArray()) {
+                try {
+                    this.params().put(paramField, Json.MAPPER.writeValueAsString(paramValue));
+                } catch (IOException e) {
+                    this.params().put(paramField, paramValue.toString());
+                }
+            }
             else if (paramValue.isNull())
                 this.params().put(paramField, "null");
             else
@@ -215,6 +220,13 @@ public class Attribute {
 
     public void deserialize(String json) throws ValidationException, IOException {
         deserialize(Json.MAPPER.readTree(json));
+    }
+
+    /**
+     * Public deserialize method for Map representation (XContent migration).
+     */
+    public void deserialize(Map<String, Object> map) throws ValidationException {
+        deserializeFromMap(map);
     }
 
     /**

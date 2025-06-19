@@ -64,19 +64,19 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>${jackson.core.version}</version>
-            <scope>provided</scope><!-- Provided by OpenSearch -->
+            <scope>compile</scope><!-- Include in plugin for runtime -->
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.databind.version}</version>
-            <scope>provided</scope><!-- Provided by OpenSearch -->
+            <scope>compile</scope><!-- Include in plugin for runtime -->
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
             <version>${jackson.annotations.version}</version>
-            <scope>provided</scope><!-- Provided by OpenSearch -->
+            <scope>compile</scope><!-- Include in plugin for runtime -->
         </dependency>
 
         <!-- Test infrastructure -->
@@ -112,14 +112,13 @@
                     <!-- Exclude Elasticsearch plugin files during OpenSearch migration -->
                     <excludes>
                         <exclude>**/org/elasticsearch/plugin/zentity/**</exclude>
-                        <!-- Temporarily exclude problematic files for minimal testing -->
-                                                  <exclude>**/org/opensearch/plugin/zentity/ZentityPlugin.java</exclude>
-
-                          <exclude>**/org/opensearch/plugin/zentity/ResolutionAction.java</exclude>
-                                                  <exclude>**/org/opensearch/plugin/zentity/SetupAction.java</exclude>
-                          <exclude>**/org/opensearch/plugin/zentity/BulkAction.java</exclude>
-
-                        
+                        <!-- Focus on just ResolutionAction and core XContent migration -->
+                        <exclude>**/org/opensearch/plugin/zentity/ZentityPlugin.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/ZentityPluginMinimal.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/ModelsAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/BulkAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/SetupAction.java</exclude>
+                        <!-- Note: ResolutionAction is now included to test Jackson runtime resolution -->
                     </excludes>
                 </configuration>
             </plugin>

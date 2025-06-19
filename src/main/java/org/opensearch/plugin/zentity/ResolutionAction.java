@@ -191,9 +191,7 @@ public class ResolutionAction extends BaseRestHandler {
 
             // If no entity type is given, check if the entity model is embedded in the request, and if so then use it.
             try {
-                Input input = new Input(body);
-                Job job = buildJob(client, input, params, reqParams);
-                onComplete.onResponse(job);
+                buildJob(client, new Input(body), body, params, reqParams, onComplete);
             } catch (Exception e) {
                 onComplete.onFailure(e);
             }
@@ -203,8 +201,7 @@ public class ResolutionAction extends BaseRestHandler {
             getModelMap(client, entityType, ActionListener.wrap(
                     (modelMap) -> {
                         try {
-                            Model model = new Model(modelMap, true);
-                            buildJob(client, model, body, params, reqParams, onComplete);
+                            buildJob(client, new Model(modelMap, true), body, params, reqParams, onComplete);
                         } catch (Exception e) {
                             onComplete.onFailure(e);
                         }
@@ -288,13 +285,13 @@ public class ResolutionAction extends BaseRestHandler {
      * Run a collection of resolution jobs concurrently.
      *
      * @param client      The node client.
-     * @param modelString The serialized entity model (null is acceptable).
+     * @param modelMap    The entity model as a Map (null is acceptable).
      *                    Deserialized by each job to avoid mutating the model shared between jobs.
      * @param entries     The bulk tuple entries.
      * @param reqParams   The parameters map for the entire request.
      * @param listener    The listener for completion results.
      */
-    static void executeBulk(NodeClient client, String modelString, List<Tuple<String, String>> entries, Map<String, String> reqParams, ActionListener<Collection<BulkAction.SingleResult>> listener) {
+    static void executeBulk(NodeClient client, Map<String, Object> modelMap, List<Tuple<String, String>> entries, Map<String, String> reqParams, ActionListener<Collection<BulkAction.SingleResult>> listener) {
         BiConsumer<Tuple<String, String>, ActionListener<BulkAction.SingleResult>> jobRunner = (tuple, delegate) -> {
             ActionListener<Job> onJobBuilt = ActionListener.wrap(
                     (job) -> runJob(job, delegate),
@@ -313,7 +310,7 @@ public class ResolutionAction extends BaseRestHandler {
 
             // Handle job building errors, but not job running as those should be considered fatal
             try {
-                if (modelString == null) {
+                if (modelMap == null) {
                     // This request did not have an entity model in the URL. Retrieve the entity model for this job.
                     buildJob(client, body, params, reqParams, onJobBuilt);
                 } else if (params.get(PARAM_ENTITY_TYPE) != null && !java.util.Objects.equals(params.get(PARAM_ENTITY_TYPE), reqParams.get(PARAM_ENTITY_TYPE))) {
@@ -321,12 +318,8 @@ public class ResolutionAction extends BaseRestHandler {
                     buildJob(client, body, params, reqParams, onJobBuilt);
                 } else {
                     // This job uses the entity model from the URL.
-                    // For now, we'll need to parse the modelString to a Map
-                    // This is a temporary workaround during the OpenSearch migration
                     try {
-                        // Skip model creation for bulk operations to avoid Jackson issues
-                        // TODO: Implement proper Map-based model handling for bulk operations
-                        onJobBuilt.onFailure(new ValidationException("Bulk operations with entity models are temporarily disabled during OpenSearch migration."));
+                        buildJob(client, new Model(modelMap, false), body, params, reqParams, onJobBuilt);
                     } catch (Exception e) {
                         onJobBuilt.onFailure(e);
                     }
@@ -379,8 +372,10 @@ public class ResolutionAction extends BaseRestHandler {
             // An entity type was given in the URL.
             // One entity model will be used for all jobs (unless overridden by any jobs).
             // Retrieve the entity model once before running any jobs.
-            // Temporarily disable bulk operations with entity models during OpenSearch migration
-            onComplete.onFailure(new ValidationException("Bulk operations with entity models are temporarily disabled during OpenSearch migration."));
+            getModelMap(client, entityType, ActionListener.wrap(
+                    (modelMap) -> executeBulk(client, modelMap, entries, reqParams, delegate),
+                    onComplete::onFailure
+            ));
         }
     }
 
