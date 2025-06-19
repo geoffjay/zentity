@@ -196,7 +196,7 @@ public class Attribute {
         // Set any values or params that were specified in the input.
         while (valuesNode.hasNext()) {
             JsonNode valueNode = valuesNode.next();
-            this.values().add(Value.create(this.type, valueNode));
+            this.values().add(Value.create(this.type, jsonNodeToObject(valueNode)));
         }
 
         // Set any params that were specified in the input, with the values serialized as strings.
@@ -244,9 +244,9 @@ public class Attribute {
             if (valuesObj instanceof List) {
                 List<Object> valuesList = (List<Object>) valuesObj;
                 for (Object valueObj : valuesList) {
-                    // For now, just store as string values to avoid JsonNode dependency
-                    // TODO: Implement proper Value parsing without JsonNode
-                    // this.values().add(Value.create(this.type, valueNode));
+                    if (valueObj != null) {
+                        this.values().add(Value.create(this.type, valueObj));
+                    }
                 }
             }
         }
@@ -268,5 +268,38 @@ public class Attribute {
                 }
             }
         }
+    }
+
+    /**
+     * Convert JsonNode to appropriate Java Object for Value creation.
+     * This method helps with the Jackson to XContent migration.
+     */
+    private static Object jsonNodeToObject(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) {
+            return null;
+        }
+        if (node.isTextual()) {
+            return node.asText();
+        }
+        if (node.isBoolean()) {
+            return node.asBoolean();
+        }
+        if (node.isNumber()) {
+            if (node.isInt()) {
+                return node.asInt();
+            } else if (node.isLong()) {
+                return node.asLong();
+            } else if (node.isDouble()) {
+                return node.asDouble();
+            } else if (node.isFloatingPointNumber()) {
+                return node.asDouble();
+            } else {
+                return node.asDouble(); // Default to double for other number types
+            }
+        }
+        if (node.isArray() || node.isObject()) {
+            return node.toString(); // Convert complex types to string
+        }
+        return node.asText(); // Fallback to text representation
     }
 }

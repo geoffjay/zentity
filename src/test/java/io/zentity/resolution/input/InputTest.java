@@ -940,7 +940,7 @@ public class InputTest {
     @Test
     public void testValidScopeExcludeIndicesTypeArray() throws Exception {
         JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(validScopeIndicesTypeArray));
-        Input input = new Input(requestBody);
+        Input input = new Input(requestBody.toString());
         Assert.assertFalse(input.model().indices().containsKey("index_name_a"));
         Assert.assertTrue(input.model().indices().containsKey("index_name_b"));
         Assert.assertTrue(input.model().indices().containsKey("index_name_c"));
