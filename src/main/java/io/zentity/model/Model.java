@@ -114,12 +114,12 @@ public class Model {
             throw new ValidationException(msg.apply("", "must not be empty"));
         if (Patterns.EMPTY_STRING.matcher(name).matches())
             throw new ValidationException(msg.apply(name, "must not be empty"));
-        if (!StringsUtil.validFileName(name))
-            throw new ValidationException(msg.apply(name, "must not contain the following characters: " + StringsUtil.INVALID_FILENAME_CHARS));
         if (name.contains("#"))
             throw new ValidationException(msg.apply(name, "must not contain '#'"));
         if (name.contains(":"))
             throw new ValidationException(msg.apply(name, "must not contain ':'"));
+        if (!StringsUtil.validFileName(name))
+            throw new ValidationException(msg.apply(name, "must not contain the following characters: " + StringsUtil.INVALID_FILENAME_CHARS));
         if (name.charAt(0) == '_' || name.charAt(0) == '-' || name.charAt(0) == '+')
             throw new ValidationException(msg.apply(name, "must not start with '_', '-', or '+'"));
         int byteCount = 0;
@@ -292,6 +292,13 @@ public class Model {
             }
         }
 
+        // Check for unexpected fields
+        for (String fieldName : modelMap.keySet()) {
+            if (!REQUIRED_FIELDS.contains(fieldName)) {
+                throw new ValidationException("'" + fieldName + "' is not a recognized field.");
+            }
+        }
+
         // Basic validation and parsing of each required field
         for (String fieldName : REQUIRED_FIELDS) {
             Object fieldValue = modelMap.get(fieldName);
@@ -399,7 +406,7 @@ public class Model {
             }
             
             Map<String, Object> indexMap = (Map<String, Object>) indexValue;
-            Index index = new Index(indexName, indexMap);
+            Index index = new Index(indexName, indexMap, this.validateRunnable);
             this.indices.put(indexName, index);
         }
     }
@@ -418,7 +425,7 @@ public class Model {
             }
             
             Map<String, Object> matcherMap = (Map<String, Object>) matcherValue;
-            Matcher matcher = new Matcher(matcherName, matcherMap);
+            Matcher matcher = new Matcher(matcherName, matcherMap, this.validateRunnable);
             this.matchers.put(matcherName, matcher);
         }
     }
@@ -437,7 +444,7 @@ public class Model {
             }
             
             Map<String, Object> resolverMap = (Map<String, Object>) resolverValue;
-            Resolver resolver = new Resolver(resolverName, resolverMap);
+            Resolver resolver = new Resolver(resolverName, resolverMap, this.validateRunnable);
             this.resolvers.put(resolverName, resolver);
         }
     }

@@ -72,6 +72,13 @@ public class Index {
         this.deserialize(map);
     }
 
+    public Index(String name, Map<String, Object> map, boolean validateRunnable) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        this.validateRunnable = validateRunnable;
+        this.deserialize(map);
+    }
+
     public String name() {
         return this.name;
     }
