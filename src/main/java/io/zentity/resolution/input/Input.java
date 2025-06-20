@@ -207,6 +207,10 @@ public class Input {
 
         // Parse and validate the "scope" field
         if (inputMap.containsKey("scope")) {
+            Object scopeValue = inputMap.get("scope");
+            if (scopeValue != null && !(scopeValue instanceof Map)) {
+                throw new ValidationException("'scope' must be an object.");
+            }
             Map<String, Object> scopeMap = XContentJson.getNestedMap(inputMap, "scope");
             this.scope.deserializeFromMap(scopeMap, this.model);
 
@@ -264,14 +268,16 @@ public class Input {
         }
         
         Object attributesValue = inputMap.get("attributes");
+        if (attributesValue == null) {
+            return attributes; // null attributes is valid
+        }
         if (!(attributesValue instanceof Map)) {
             throw new ValidationException("'attributes' must be an object.");
         }
         
         Map<String, Object> attributesMap = (Map<String, Object>) attributesValue;
-        if (attributesMap.isEmpty()) {
-            throw new ValidationException("'attributes' must not be empty.");
-        }
+        // Note: Empty attributes are allowed as long as terms or ids are present
+        // The validation is done later in deserializeFromMap()
         
         for (Map.Entry<String, Object> entry : attributesMap.entrySet()) {
             String attributeName = entry.getKey();
@@ -294,7 +300,7 @@ public class Input {
                 List<Object> valuesList = (List<Object>) attributeValue;
                                         for (Object value : valuesList) {
                             if (value != null) {
-                                addSimpleStringValue(attribute, value.toString());
+                                addSimpleValue(attribute, value);
                             }
                         }
             } else if (attributeValue instanceof Map) {
@@ -308,7 +314,7 @@ public class Input {
                         List<Object> valuesList = (List<Object>) valuesObj;
                         for (Object value : valuesList) {
                             if (value != null) {
-                                addSimpleStringValue(attribute, value.toString());
+                                addSimpleValue(attribute, value);
                             }
                         }
                     } else {
@@ -392,6 +398,9 @@ public class Input {
         }
         
         Object idsValue = inputMap.get("ids");
+        if (idsValue == null) {
+            return idsObj; // null ids is valid
+        }
         if (!(idsValue instanceof Map)) {
             throw new ValidationException("'ids' must be an object.");
         }
@@ -449,7 +458,7 @@ public class Input {
     /**
      * Add a value to an attribute.
      */
-    private void addSimpleStringValue(Attribute attribute, String valueString) throws ValidationException {
+    private void addSimpleValue(Attribute attribute, Object valueObject) throws ValidationException {
         // Get the attribute type from the model
         String attributeType = "string"; // Default type
         if (this.model.attributes().containsKey(attribute.name())) {
@@ -457,8 +466,8 @@ public class Input {
         }
         
         // Create the appropriate Value object based on the attribute type
-        Object parsedValue = parseValueByType(valueString, attributeType);
-        Value value = Value.create(attributeType, parsedValue);
+        // Let the Value classes handle type validation directly
+        Value value = Value.create(attributeType, valueObject);
         attribute.values().add(value);
     }
     

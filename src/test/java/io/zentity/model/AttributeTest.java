@@ -263,8 +263,22 @@ public class AttributeTest {
 
     ////  Input Data Type Detection  ///////////////////////////////////////////////////////////////////////////////////
 
-    private JsonNode jsonValue(String json) throws IOException {
-        return Json.MAPPER.readTree(json).get("value");
+    private Object jsonValue(String json) throws IOException {
+        JsonNode valueNode = Json.MAPPER.readTree(json).get("value");
+        if (valueNode == null || valueNode.isNull()) {
+            return null;
+        } else if (valueNode.isTextual()) {
+            return valueNode.asText();
+        } else if (valueNode.isBoolean()) {
+            return valueNode.asBoolean();
+        } else if (valueNode.isIntegralNumber()) {
+            return valueNode.asLong();
+        } else if (valueNode.isFloatingPointNumber()) {
+            return valueNode.asDouble();
+        } else {
+            // For complex types, convert to string
+            return valueNode.toString();
+        }
     }
 
     @Test

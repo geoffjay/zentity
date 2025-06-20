@@ -27,6 +27,7 @@ import org.opensearch.core.xcontent.NamedXContentRegistry;
 import io.zentity.common.Patterns;
 import org.opensearch.OpenSearchException;
 import org.opensearch.plugin.zentity.StringsUtil;
+import org.opensearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -250,9 +251,28 @@ public class Model {
     }
 
     public void deserialize(String json) throws ValidationException, IOException {
-        // Temporarily disable JSON parsing to avoid Jackson issues
-        // TODO: Implement full XContent-based parsing
-        throw new ValidationException("Model deserialization from JSON string is temporarily disabled during OpenSearch migration. Please use the JsonNode constructor instead.");
+        if (json == null || json.trim().isEmpty()) {
+            throw new ValidationException("Entity model JSON cannot be null or empty.");
+        }
+        
+        try {
+            // Use OpenSearch XContent parser instead of Jackson
+            XContentParser parser = JsonXContent.jsonXContent.createParser(
+                NamedXContentRegistry.EMPTY,
+                DeprecationHandler.THROW_UNSUPPORTED_OPERATION,
+                json
+            );
+            
+            // Parse the JSON into a Map
+            Map<String, Object> modelMap = parser.map();
+            parser.close();
+            
+            // Use the existing Map-based deserialization
+            this.deserializeFromMap(modelMap);
+            
+        } catch (IOException e) {
+            throw new ValidationException("Failed to parse entity model JSON: " + e.getMessage());
+        }
     }
     
     /**

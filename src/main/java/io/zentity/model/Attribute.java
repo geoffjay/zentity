@@ -56,7 +56,11 @@ public class Attribute {
         validateName(name);
         this.name = name;
         this.nameFields = this.parseNameFields(name);
-        this.deserialize(json);
+        try {
+            this.deserialize(json);
+        } catch (ValidationException e) {
+            throw e;
+        }
     }
 
     public Attribute(String name, JsonNode json, boolean validateRunnable) throws ValidationException, JsonProcessingException {
@@ -72,7 +76,11 @@ public class Attribute {
         this.name = name;
         this.nameFields = this.parseNameFields(name);
         this.validateRunnable = validateRunnable;
-        this.deserialize(json);
+        try {
+            this.deserialize(json);
+        } catch (ValidationException e) {
+            throw e;
+        }
     }
 
     /**
@@ -263,14 +271,17 @@ public class Attribute {
     }
 
     public void deserialize(String json) throws ValidationException {
-        // Temporarily simplified - parse JSON manually to avoid IOException
         if (json == null || json.trim().isEmpty()) {
             throw new ValidationException("JSON cannot be null or empty");
         }
         
-        // For now, just set default values - this method may not be used in current Resolution API
-        // TODO: Implement proper JSON parsing without IOException when needed
-        this.type = "string"; // Default type
+        try {
+            // Parse JSON using Jackson and delegate to JsonNode-based method
+            JsonNode jsonNode = Json.MAPPER.readTree(json);
+            this.deserialize(jsonNode);
+        } catch (IOException e) {
+            throw new ValidationException("Invalid JSON format: " + e.getMessage());
+        }
     }
 
     /**

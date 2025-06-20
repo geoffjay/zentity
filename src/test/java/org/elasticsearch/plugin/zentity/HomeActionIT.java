@@ -46,7 +46,8 @@ public class HomeActionIT extends AbstractIT {
 
         // Verify if the plugin properties match the output of GET _zentity
         Response response = client().performRequest(new Request("GET", "_zentity"));
-        JsonNode json = Json.MAPPER.readTree(response.getEntity().getContent());
+        String responseBody = new String(response.getEntity().getContent().readAllBytes());
+        JsonNode json = Json.MAPPER.readTree(responseBody);
         assertEquals(json.get("name").asText(), props.getProperty("name"));
         assertEquals(json.get("description").asText(), props.getProperty("description"));
         assertEquals(json.get("website").asText(), props.getProperty("zentity.website"));

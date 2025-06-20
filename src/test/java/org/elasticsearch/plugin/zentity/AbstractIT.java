@@ -107,7 +107,8 @@ public abstract class AbstractIT {
 
             // Verify if the client can establish a connection to the cluster.
             Response response = client.performRequest(new Request("GET", "/"));
-            JsonNode json = Json.MAPPER.readTree(response.getEntity().getContent());
+            String responseBody = new String(response.getEntity().getContent().readAllBytes());
+            JsonNode json = Json.MAPPER.readTree(responseBody);
             assertEquals("You Know, for Search", json.get("tagline").textValue());
 
         } catch (IOException e) {
