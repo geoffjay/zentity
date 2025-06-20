@@ -1,4 +1,4 @@
-# Build, test, and deploy zentity for each supported version of Elasticsearch whenever pushing a release tag.
+# Build, test, and deploy zentity for each supported version of OpenSearch whenever pushing a release tag.
 name: Deploy
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       # Checkout the repository.
       # Uses: https://github.com/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Get the release tag.
       - name: Get release tag
@@ -64,37 +64,22 @@ jobs:
       ZENTITY_VERSION: ${{ needs.create_release.outputs.zentity_version }}
     strategy:
 
-      # Build and test zentity for each version of Elasticsearch that its APIs support.
+      # Build and test zentity for each version of OpenSearch that its APIs support.
       matrix:
-        elasticsearch:
-          - 8.17.0
-          - 8.16.2
-          - 8.16.1
-          - 8.16.0
-          - 8.15.5
-          - 8.15.4
-          - 8.15.3
-          - 8.15.2
-          - 8.15.1
-          - 8.15.0
-          - 8.14.3
-          - 8.14.2
-          - 8.14.1
-          - 8.14.0
-          - 8.13.3
-          - 8.13.2
-          - 8.13.1
-          - 8.13.0
+        opensearch:
+          - 2.17.0
+          - 2.18.0
+          - 2.19.0
     steps:
 
       # Checkout the repository.
       # Uses: https://github.com/actions/checkout
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       # Configure the JDK.
       # Uses: https://github.com/actions/setup-java
-      # Elasticsearch JVM support matrix: https://www.elastic.co/support/matrix#matrix_jvm
+      # OpenSearch JVM support matrix: https://opensearch.org/docs/latest/install-and-configure/install-opensearch/index/
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -103,24 +88,24 @@ jobs:
       # Cache Maven packages.
       # Uses: https://github.com/actions/cache
       - name: Cache packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      # Build and test zentity for a given version of Elasticsearch.
+      # Build and test zentity for a given version of OpenSearch.
       - name: Build and test
         env:
-          ELASTICSEARCH_VERSION: ${{ matrix.elasticsearch }}
-        run: mvn --batch-mode clean install -Dzentity.version=$ZENTITY_VERSION -Delasticsearch.version=$ELASTICSEARCH_VERSION --file pom.xml
+          OPENSEARCH_VERSION: ${{ matrix.opensearch }}
+        run: mvn --batch-mode clean install -Dzentity.version=$ZENTITY_VERSION -Dopensearch.version=$OPENSEARCH_VERSION --file pom.xml
 
-      # Set the artifact name using the given versions of zentity and Elasticsearch.
+      # Set the artifact name using the given versions of zentity and OpenSearch.
       - name: Set artifact name
         id: set_artifact_name
         env:
-          ELASTICSEARCH_VERSION: ${{ matrix.elasticsearch }}
-        run: echo ::set-output name=name::zentity-$ZENTITY_VERSION-elasticsearch-$ELASTICSEARCH_VERSION.zip
+          OPENSEARCH_VERSION: ${{ matrix.opensearch }}
+        run: echo ::set-output name=name::zentity-$ZENTITY_VERSION-opensearch-$OPENSEARCH_VERSION.zip
 
       # Upload the release asset to: https://github.com/zentity-io/zentity/releases
       # Uses: https://github.com/actions/upload-release-asset
