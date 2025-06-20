@@ -21,6 +21,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Json;
 import io.zentity.common.Patterns;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -44,30 +46,43 @@ public class Matcher {
     private boolean validateRunnable = false;
     private Map<String, Pattern> variables = new TreeMap<>();
 
-    public Matcher(String name, JsonNode json) throws ValidationException, JsonProcessingException {
+    public Matcher(String name, JsonNode json) throws ValidationException {
         validateName(name);
         this.name = name;
         this.deserialize(json);
     }
 
-    public Matcher(String name, String json) throws ValidationException, IOException {
+    public Matcher(String name, String json) throws ValidationException {
         validateName(name);
         this.name = name;
         this.deserialize(json);
     }
 
-    public Matcher(String name, JsonNode json, boolean validateRunnable) throws ValidationException, JsonProcessingException {
+    public Matcher(String name, JsonNode json, boolean validateRunnable) throws ValidationException {
         validateName(name);
         this.name = name;
         this.validateRunnable = validateRunnable;
         this.deserialize(json);
     }
 
-    public Matcher(String name, String json, boolean validateRunnable) throws ValidationException, IOException {
+    public Matcher(String name, String json, boolean validateRunnable) throws ValidationException {
         validateName(name);
         this.name = name;
         this.validateRunnable = validateRunnable;
         this.deserialize(json);
+    }
+
+    public Matcher(String name, Map<String, Object> map) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        this.deserialize(map);
+    }
+
+    public Matcher(String name, Map<String, Object> map, boolean validateRunnable) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        this.validateRunnable = validateRunnable;
+        this.deserialize(map);
     }
 
     /**
@@ -108,10 +123,28 @@ public class Matcher {
         return this.variables;
     }
 
-    public void clause(JsonNode value) throws ValidationException, JsonProcessingException {
+    public void clause(JsonNode value) throws ValidationException {
         validateClause(value);
-        this.clause = Json.MAPPER.writeValueAsString(value);
+        try {
+            this.clause = Json.MAPPER.writeValueAsString(value);
+        } catch (IOException e) {
+            throw new ValidationException("Failed to serialize clause: " + e.getMessage());
+        }
         this.variables = parseVariables(this.clause);
+    }
+
+    public void clause(Map<String, Object> value) throws ValidationException {
+        if (value == null || value.isEmpty()) {
+            throw new ValidationException("'matchers." + this.name + ".clause' must not be empty.");
+        }
+        // Convert clause map to JSON string
+        try (XContentBuilder builder = JsonXContent.contentBuilder()) {
+            builder.value(value);
+            this.clause = builder.toString();
+            this.variables = parseVariables(this.clause);
+        } catch (IOException e) {
+            throw new ValidationException("Failed to serialize clause: " + e.getMessage());
+        }
     }
 
     public void quality(JsonNode value) throws ValidationException {
@@ -164,7 +197,7 @@ public class Matcher {
      * @param json Matcher object of an entity model.
      * @throws ValidationException
      */
-    public void deserialize(JsonNode json) throws ValidationException, JsonProcessingException {
+    public void deserialize(JsonNode json) throws ValidationException {
         validateObject(json);
 
         // Validate the existence of required fields.
@@ -193,8 +226,13 @@ public class Matcher {
                         Map.Entry<String, JsonNode> paramNode = paramsNode.next();
                         String paramField = paramNode.getKey();
                         JsonNode paramValue = paramNode.getValue();
-                        if (paramValue.isObject() || paramValue.isArray())
-                            this.params().put(paramField, Json.MAPPER.writeValueAsString(paramValue));
+                        if (paramValue.isObject() || paramValue.isArray()) {
+                            try {
+                                this.params().put(paramField, Json.MAPPER.writeValueAsString(paramValue));
+                            } catch (IOException e) {
+                                this.params().put(paramField, paramValue.toString());
+                            }
+                        }
                         else if (paramValue.isNull())
                             this.params().put(paramField, "null");
                         else
@@ -210,8 +248,98 @@ public class Matcher {
         }
     }
 
-    public void deserialize(String json) throws ValidationException, IOException {
-        deserialize(Json.MAPPER.readTree(json));
+    public void deserialize(String json) throws ValidationException {
+        try {
+            deserialize(Json.MAPPER.readTree(json));
+        } catch (IOException e) {
+            throw new ValidationException("Invalid JSON: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Deserialize from a Map representation (XContent migration).
+     * 
+     * @param map The matcher map from XContent parsing.
+     * @throws ValidationException If validation fails.
+     * @throws IOException If processing fails.
+     */
+    @SuppressWarnings("unchecked")
+    public void deserialize(Map<String, Object> map) throws ValidationException {
+        if (map == null) {
+            throw new ValidationException("'matchers." + this.name + "' must be an object.");
+        }
+        
+        if (this.validateRunnable && map.isEmpty()) {
+            throw new ValidationException("'matchers." + this.name + "' must not be empty in the entity model.");
+        }
+
+        // Validate the existence of required fields
+        for (String field : REQUIRED_FIELDS) {
+            if (!map.containsKey(field)) {
+                throw new ValidationException("'matchers." + this.name + "' is missing required field '" + field + "'.");
+            }
+        }
+
+        // Process each field in the map
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            
+            switch (name) {
+                case "clause":
+                    if (!(value instanceof Map)) {
+                        throw new ValidationException("'matchers." + this.name + ".clause' must be an object.");
+                    }
+                    this.clause((Map<String, Object>) value);
+                    break;
+                    
+                case "params":
+                    if (value == null) {
+                        break;
+                    }
+                    if (!(value instanceof Map)) {
+                        throw new ValidationException("'matchers." + this.name + ".params' must be an object.");
+                    }
+                    Map<String, Object> paramsMap = (Map<String, Object>) value;
+                    for (Map.Entry<String, Object> paramEntry : paramsMap.entrySet()) {
+                        String paramField = paramEntry.getKey();
+                        Object paramValue = paramEntry.getValue();
+                        
+                        if (paramValue == null) {
+                            this.params().put(paramField, "null");
+                        } else if (paramValue instanceof Map || paramValue instanceof Iterable) {
+                            // Convert complex objects to JSON string
+                            try (XContentBuilder builder = JsonXContent.contentBuilder()) {
+                                builder.value(paramValue);
+                                this.params().put(paramField, builder.toString());
+                            } catch (IOException e) {
+                                this.params().put(paramField, paramValue.toString());
+                            }
+                        } else {
+                            this.params().put(paramField, paramValue.toString());
+                        }
+                    }
+                    break;
+                    
+                case "quality":
+                    if (value != null) {
+                        Double qualityValue;
+                        if (value instanceof Number) {
+                            qualityValue = ((Number) value).doubleValue();
+                        } else {
+                            throw new ValidationException("'matchers." + this.name + ".quality' must be a floating point number in the range of 0.0 - 1.0. Integer values of 0 or 1 are acceptable.");
+                        }
+                        if (qualityValue < 0.0 || qualityValue > 1.0) {
+                            throw new ValidationException("'matchers." + this.name + ".quality' must be a floating point number in the range of 0.0 - 1.0. Integer values of 0 or 1 are acceptable.");
+                        }
+                        this.quality = qualityValue;
+                    }
+                    break;
+                    
+                default:
+                    throw new ValidationException("'matchers." + this.name + "." + name + "' is not a recognized field.");
+            }
+        }
     }
 
 }

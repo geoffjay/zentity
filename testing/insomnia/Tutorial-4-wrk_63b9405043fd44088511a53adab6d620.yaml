@@ -1,0 +1,2440 @@
+type: collection.insomnia.rest/5.0
+name: Tutorial 4
+meta:
+  id: wrk_63b9405043fd44088511a53adab6d620
+  created: 1750367967759
+  modified: 1750367967759
+  description: ""
+collection:
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_4_person?pretty&_source=true&_exp\
+      lanation=true"
+    name: 8. Resolution with explanation
+    meta:
+      id: req_7307f0f9e3fb40aebb6fa74aaf29004d
+      created: 1750373876889
+      modified: 1750396061758
+      isPrivate: false
+      description: ""
+      sortKey: -1750373876889
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allie" ],
+            "last_name": [ "Jones" ],
+            "phone": [ "202-555-1234" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResponse = {
+          "took" : 54,
+          "hits" : {
+            "total" : 9,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "1",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_phone" : {
+                    "attributes" : [ "first_name", "last_name", "phone" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allie",
+                  "input_value" : "Allie",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allie",
+                  "input_value" : "Allie",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "phone",
+                  "target_field" : "phone.clean",
+                  "target_value" : "202-555-1234",
+                  "input_value" : "202-555-1234",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "allie@example.net",
+                "first_name" : "Allie",
+                "id" : "1",
+                "last_name" : "Jones",
+                "phone" : "202-555-1234",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "4",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "" ],
+                "email" : [ "" ],
+                "first_name" : [ "Ally" ],
+                "last_name" : [ "Joans" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "" ],
+                "street" : [ "" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_phone" : {
+                    "attributes" : [ "first_name", "last_name", "phone" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Ally",
+                  "input_value" : "Allie",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Joans",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "phone",
+                  "target_field" : "phone.clean",
+                  "target_value" : "202-555-1234",
+                  "input_value" : "202-555-1234",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "",
+                "email" : "",
+                "first_name" : "Ally",
+                "id" : "4",
+                "last_name" : "Joans",
+                "phone" : "202-555-1234",
+                "state" : "",
+                "street" : ""
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "3",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_street_city_state" : {
+                    "attributes" : [ "city", "first_name", "last_name", "state", "street" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "city",
+                  "target_field" : "city.clean",
+                  "target_value" : "Washington",
+                  "input_value" : "Washington",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allie",
+                  "input_value" : "Allie",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allie",
+                  "input_value" : "Allie",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allie",
+                  "input_value" : "Ally",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones",
+                  "input_value" : "Joans",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "state",
+                  "target_field" : "state.keyword",
+                  "target_value" : "DC",
+                  "input_value" : "DC",
+                  "input_matcher" : "exact",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "street",
+                  "target_field" : "street.clean",
+                  "target_value" : "123 Main St",
+                  "input_value" : "123 Main St",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Allie",
+                "id" : "3",
+                "last_name" : "Jones",
+                "phone" : "",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "6",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "email_phone" : {
+                    "attributes" : [ "email", "phone" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "city",
+                  "target_field" : "city.clean",
+                  "target_value" : "Washington",
+                  "input_value" : "Washington",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "email",
+                  "target_field" : "email.keyword",
+                  "target_value" : "allie@example.net",
+                  "input_value" : "allie@example.net",
+                  "input_matcher" : "exact",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones",
+                  "input_value" : "Joans",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "phone",
+                  "target_field" : "phone.clean",
+                  "target_value" : "202-555-1234",
+                  "input_value" : "202-555-1234",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "state",
+                  "target_field" : "state.keyword",
+                  "target_value" : "DC",
+                  "input_value" : "DC",
+                  "input_matcher" : "exact",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "street",
+                  "target_field" : "street.clean",
+                  "target_value" : "123 Main St",
+                  "input_value" : "123 Main St",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "allie@example.net",
+                "first_name" : "Allison",
+                "id" : "6",
+                "last_name" : "Jones",
+                "phone" : "202-555-1234",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "11",
+              "_hop" : 2,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "2025559867" ],
+                "state" : [ "" ],
+                "street" : [ "" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_email" : {
+                    "attributes" : [ "email", "first_name", "last_name" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "email",
+                  "target_field" : "email.keyword",
+                  "target_value" : "allie@example.net",
+                  "input_value" : "allie@example.net",
+                  "input_matcher" : "exact",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Alison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Alison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Joans",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "",
+                "email" : "allie@example.net",
+                "first_name" : "Alison",
+                "id" : "11",
+                "last_name" : "Jones-Smith",
+                "phone" : "2025559867",
+                "state" : "",
+                "street" : ""
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "7",
+              "_hop" : 3,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "+1 (202) 555 1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_phone" : {
+                    "attributes" : [ "first_name", "last_name", "phone" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "city",
+                  "target_field" : "city.clean",
+                  "target_value" : "Washington",
+                  "input_value" : "Washington",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "phone",
+                  "target_field" : "phone.clean",
+                  "target_value" : "+1 (202) 555 1234",
+                  "input_value" : "202-555-1234",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "state",
+                  "target_field" : "state.keyword",
+                  "target_value" : "DC",
+                  "input_value" : "DC",
+                  "input_matcher" : "exact",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Allison",
+                "id" : "7",
+                "last_name" : "Smith",
+                "phone" : "+1 (202) 555 1234",
+                "state" : "DC",
+                "street" : "555 Broad St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "10",
+              "_hop" : 3,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "202-555-9876" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_phone" : {
+                    "attributes" : [ "first_name", "last_name", "phone" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "city",
+                  "target_field" : "city.clean",
+                  "target_value" : "Washington",
+                  "input_value" : "Washington",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Alison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Alison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Alison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Alison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "phone",
+                  "target_field" : "phone.clean",
+                  "target_value" : "202-555-9876",
+                  "input_value" : "2025559867",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "state",
+                  "target_field" : "state.keyword",
+                  "target_value" : "DC",
+                  "input_value" : "DC",
+                  "input_matcher" : "exact",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Alison",
+                "id" : "10",
+                "last_name" : "Smith",
+                "phone" : "202-555-9876",
+                "state" : "DC",
+                "street" : "555 Broad St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "12",
+              "_hop" : 4,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allison.j.smith@corp.example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_street_city_state" : {
+                    "attributes" : [ "city", "first_name", "last_name", "state", "street" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "city",
+                  "target_field" : "city.clean",
+                  "target_value" : "Washington",
+                  "input_value" : "Washington",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Smith",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Joans",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Smith",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "state",
+                  "target_field" : "state.keyword",
+                  "target_value" : "DC",
+                  "input_value" : "DC",
+                  "input_matcher" : "exact",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "street",
+                  "target_field" : "street.clean",
+                  "target_value" : "555 Broad St",
+                  "input_value" : "555 Broad St",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "allison.j.smith@corp.example.net",
+                "first_name" : "Allison",
+                "id" : "12",
+                "last_name" : "Jones-Smith",
+                "phone" : "",
+                "state" : "DC",
+                "street" : "555 Broad St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "13",
+              "_hop" : 5,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Arlington" ],
+                "email" : [ "allison.j.smith@corp.example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones Smith" ],
+                "phone" : [ "703-555-5555" ],
+                "state" : [ "VA" ],
+                "street" : [ "1 Corporate Way" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_email" : {
+                    "attributes" : [ "email", "first_name", "last_name" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "email",
+                  "target_field" : "email.keyword",
+                  "target_value" : "allison.j.smith@corp.example.net",
+                  "input_value" : "allison.j.smith@corp.example.net",
+                  "input_matcher" : "exact",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones Smith",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones Smith",
+                  "input_value" : "Smith",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones Smith",
+                  "input_value" : "Joans",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones Smith",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones Smith",
+                  "input_value" : "Smith",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Arlington",
+                "email" : "allison.j.smith@corp.example.net",
+                "first_name" : "Allison",
+                "id" : "13",
+                "last_name" : "Jones Smith",
+                "phone" : "703-555-5555",
+                "state" : "VA",
+                "street" : "1 Corporate Way"
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(9);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(9);
+        });
+
+
+        insomnia.test('Hit objects have all required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes', '_explanation', '_source');
+          });
+        });
+
+
+        insomnia.test('Multiple resolver types are used', () => {
+          const resolverTypes = new Set();
+          response.hits.hits.forEach(hit => {
+            Object.keys(hit._explanation.resolvers).forEach(resolver => {
+              resolverTypes.add(resolver);
+            });
+          });
+          
+          insomnia.expect(resolverTypes.has('name_phone')).to.be.true;
+          insomnia.expect(resolverTypes.has('name_street_city_state')).to.be.true;
+          insomnia.expect(resolverTypes.has('email_phone')).to.be.true;
+          insomnia.expect(resolverTypes.has('name_email')).to.be.true;
+        });
+
+
+        insomnia.test('Hop progression shows 6-level resolution', () => {
+          const expectedHops = [0, 0, 1, 1, 2, 3, 3, 4, 5];
+          response.hits.hits.forEach((hit, index) => {
+            insomnia.expect(hit._hop).to.eql(expectedHops[index]);
+          });
+        });
+
+
+        insomnia.test('Match counts vary by complexity', () => {
+          const matchCounts = response.hits.hits.map(hit => hit._explanation.matches.length);
+          const expectedCounts = [5, 3, 9, 8, 6, 9, 9, 14, 12];
+          
+          matchCounts.forEach((count, index) => {
+            insomnia.expect(count).to.eql(expectedCounts[index]);
+          });
+        });
+
+
+        insomnia.test('Multiple matcher types are used appropriately', () => {
+          const matcherTypes = new Set();
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              matcherTypes.add(match.input_matcher);
+            });
+          });
+          
+          insomnia.expect(matcherTypes.has('fuzzy')).to.be.true;
+          insomnia.expect(matcherTypes.has('simple')).to.be.true;
+          insomnia.expect(matcherTypes.has('exact')).to.be.true;
+        });
+
+
+        insomnia.test('State and email fields use exact matching', () => {
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              if (match.target_field.includes('state.keyword') || match.target_field.includes('email.keyword')) {
+                insomnia.expect(match.input_matcher).to.eql('exact');
+              }
+            });
+          });
+        });
+
+
+        insomnia.test('Clean fields use fuzzy matching', () => {
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              if (match.target_field.includes('.clean')) {
+                insomnia.expect(match.input_matcher).to.eql('fuzzy');
+              }
+            });
+          });
+        });
+
+
+        insomnia.test('Phonetic fields use simple matching', () => {
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              if (match.target_field.includes('.phonetic')) {
+                insomnia.expect(match.input_matcher).to.eql('simple');
+              }
+            });
+          });
+        });
+
+
+        insomnia.test('Complex name variations are captured', () => {
+          const hit12 = response.hits.hits[7]; // ID 12
+          const lastNameMatches = hit12._explanation.matches.filter(m => m.attribute === 'last_name');
+          const inputValues = lastNameMatches.map(m => m.input_value);
+          
+          insomnia.expect(inputValues).to.include('Jones');
+          insomnia.expect(inputValues).to.include('Jones-Smith');
+          insomnia.expect(inputValues).to.include('Smith');
+        });
+
+
+        insomnia.test('Phone format variations are matched', () => {
+          const phoneMatches = [];
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              if (match.attribute === 'phone') {
+                phoneMatches.push({
+                  input: match.input_value,
+                  target: match.target_value
+                });
+              }
+            });
+          });
+          
+          const targetFormats = phoneMatches.map(p => p.target);
+          insomnia.expect(targetFormats).to.include('202-555-1234');
+          insomnia.expect(targetFormats).to.include('+1 (202) 555 1234');
+          insomnia.expect(targetFormats).to.include('202-555-9876');
+        });
+
+
+        insomnia.test('Email progression shows entity evolution', () => {
+          const emailMatches = [];
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              if (match.attribute === 'email') {
+                emailMatches.push(match.target_value);
+              }
+            });
+          });
+          
+          insomnia.expect(emailMatches).to.include('allie@example.net');
+          insomnia.expect(emailMatches).to.include('allison.j.smith@corp.example.net');
+        });
+
+
+        insomnia.test('Bidirectional name matching is captured', () => {
+          // Check that some matches show target containing input (Jones-Smith contains Jones)
+          // and others show input containing target (Jones from Jones-Smith)
+          let containsMatches = 0;
+          let containedMatches = 0;
+          
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              if (match.attribute === 'last_name' && match.input_value !== match.target_value) {
+                if (match.target_value.includes(match.input_value)) {
+                  containsMatches++;
+                }
+                if (match.input_value.includes(match.target_value)) {
+                  containedMatches++;
+                }
+              }
+            });
+          });
+          
+          insomnia.expect(containsMatches).to.be.above(0);
+          insomnia.expect(containedMatches).to.be.above(0);
+        });
+
+
+        insomnia.test('Final hit shows complete name evolution', () => {
+          const finalHit = response.hits.hits[8];
+          insomnia.expect(finalHit._id).to.eql('13');
+          insomnia.expect(finalHit._hop).to.eql(5);
+          insomnia.expect(finalHit._source.last_name).to.eql('Jones Smith');
+          insomnia.expect(finalHit._source.city).to.eql('Arlington');
+          insomnia.expect(finalHit._source.state).to.eql('VA');
+        });
+
+
+        insomnia.test('Resolver attributes match their purpose', () => {
+          response.hits.hits.forEach(hit => {
+            Object.entries(hit._explanation.resolvers).forEach(([resolverName, resolverData]) => {
+              if (resolverName === 'name_phone') {
+                insomnia.expect(resolverData.attributes).to.include.members(['first_name', 'last_name', 'phone']);
+              } else if (resolverName === 'name_email') {
+                insomnia.expect(resolverData.attributes).to.include.members(['first_name', 'last_name', 'email']);
+              } else if (resolverName === 'email_phone') {
+                insomnia.expect(resolverData.attributes).to.include.members(['email', 'phone']);
+              } else if (resolverName === 'name_street_city_state') {
+                insomnia.expect(resolverData.attributes).to.include.members(['first_name', 'last_name', 'city', 'state', 'street']);
+              }
+            });
+          });
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_4_person?pretty&_source=false"
+    name: 6. Resolution
+    meta:
+      id: req_20e4b6f1a73b4132a3bc4d327ddb45d7
+      created: 1750373877032
+      modified: 1750395908641
+      isPrivate: false
+      description: ""
+      sortKey: -1750373877032
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allie" ],
+            "last_name": [ "Jones" ],
+            "phone": [ "202-555-1234" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResponse = {
+          "took" : 42,
+          "hits" : {
+            "total" : 9,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "1",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "4",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "" ],
+                "email" : [ "" ],
+                "first_name" : [ "Ally" ],
+                "last_name" : [ "Joans" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "" ],
+                "street" : [ "" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "3",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "6",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "11",
+              "_hop" : 2,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "2025559867" ],
+                "state" : [ "" ],
+                "street" : [ "" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "7",
+              "_hop" : 3,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "+1 (202) 555 1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "10",
+              "_hop" : 3,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "202-555-9876" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "12",
+              "_hop" : 4,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allison.j.smith@corp.example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "13",
+              "_hop" : 5,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Arlington" ],
+                "email" : [ "allison.j.smith@corp.example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones Smith" ],
+                "phone" : [ "703-555-5555" ],
+                "state" : [ "VA" ],
+                "street" : [ "1 Corporate Way" ]
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(9);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(9);
+        });
+
+
+        insomnia.test('Hit objects have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes');
+          });
+        });
+
+
+        insomnia.test('Index name is correct', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._index).to.eql('zentity_tutorial_4_multiple_resolver_resolution');
+          });
+        });
+
+
+        insomnia.test('Query values are all 0', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._query).to.eql(0);
+          });
+        });
+
+
+        insomnia.test('All hits have complete attribute structure', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._attributes).to.have.all.keys('city', 'email', 'first_name', 'last_name', 'phone', 'state', 'street');
+          });
+        });
+
+
+        insomnia.test('Hop progression shows multi-level resolution', () => {
+          const expectedHops = [0, 0, 1, 1, 2, 3, 3, 4, 5];
+          response.hits.hits.forEach((hit, index) => {
+            insomnia.expect(hit._hop).to.eql(expectedHops[index]);
+          });
+        });
+
+
+        insomnia.test('Hit IDs are correct', () => {
+          const expectedIds = ['1', '4', '3', '6', '11', '7', '10', '12', '13'];
+          response.hits.hits.forEach((hit, index) => {
+            insomnia.expect(hit._id).to.eql(expectedIds[index]);
+          });
+        });
+
+
+        insomnia.test('Initial hits (hop 0) start the resolution chain', () => {
+          const hop0Hits = response.hits.hits.filter(hit => hit._hop === 0);
+          insomnia.expect(hop0Hits).to.have.lengthOf(2);
+          insomnia.expect(hop0Hits[0]._id).to.eql('1');
+          insomnia.expect(hop0Hits[1]._id).to.eql('4');
+        });
+
+
+        insomnia.test('Name variations show fuzzy matching', () => {
+          const firstNames = response.hits.hits.map(hit => hit._attributes.first_name[0]);
+          insomnia.expect(firstNames).to.include('Allie');
+          insomnia.expect(firstNames).to.include('Ally');
+          insomnia.expect(firstNames).to.include('Allison');
+          insomnia.expect(firstNames).to.include('Alison');
+        });
+
+
+        insomnia.test('Last name variations show complex matching', () => {
+          const lastNames = response.hits.hits.map(hit => hit._attributes.last_name[0]);
+          insomnia.expect(lastNames).to.include('Jones');
+          insomnia.expect(lastNames).to.include('Joans');
+          insomnia.expect(lastNames).to.include('Smith');
+          insomnia.expect(lastNames).to.include('Jones-Smith');
+          insomnia.expect(lastNames).to.include('Jones Smith');
+        });
+
+
+        insomnia.test('Phone number formats vary across hits', () => {
+          const phoneNumbers = response.hits.hits.map(hit => hit._attributes.phone[0]);
+          insomnia.expect(phoneNumbers).to.include('202-555-1234');
+          insomnia.expect(phoneNumbers).to.include('2025559867');
+          insomnia.expect(phoneNumbers).to.include('+1 (202) 555 1234');
+          insomnia.expect(phoneNumbers).to.include('202-555-9876');
+          insomnia.expect(phoneNumbers).to.include('703-555-5555');
+        });
+
+
+        insomnia.test('Email addresses show progression', () => {
+          const emails = response.hits.hits.map(hit => hit._attributes.email[0]).filter(email => email !== '');
+          insomnia.expect(emails).to.include('allie@example.net');
+          insomnia.expect(emails).to.include('allison.j.smith@corp.example.net');
+        });
+
+
+        insomnia.test('Geographic data shows movement', () => {
+          const cities = response.hits.hits.map(hit => hit._attributes.city[0]).filter(city => city !== '');
+          const states = response.hits.hits.map(hit => hit._attributes.state[0]).filter(state => state !== '');
+          
+          insomnia.expect(cities).to.include('Washington');
+          insomnia.expect(cities).to.include('Arlington');
+          insomnia.expect(states).to.include('DC');
+          insomnia.expect(states).to.include('VA');
+        });
+
+
+        insomnia.test('Final hop shows complete profile', () => {
+          const finalHit = response.hits.hits[response.hits.hits.length - 1];
+          insomnia.expect(finalHit._hop).to.eql(5);
+          insomnia.expect(finalHit._id).to.eql('13');
+          insomnia.expect(finalHit._attributes.city[0]).to.eql('Arlington');
+          insomnia.expect(finalHit._attributes.state[0]).to.eql('VA');
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_4_person"
+    name: 5. Validate entity model
+    meta:
+      id: req_fa7ea0931928449f996441566097f024
+      created: 1750373877176
+      modified: 1750392552690
+      isPrivate: false
+      description: ""
+      sortKey: -1750373877176
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        insomnia.test('Check if attributes match', () => {
+        	const expectedAttributes = {
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "street": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            }
+          };
+
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.attributes).to.eql(expectedAttributes);
+        });
+
+
+        insomnia.test('Check if resolvers match', () => {
+        	const expectedResolvers = {
+        		//"resolvers": {
+        			"name_street_city_state": {
+        				"attributes": [ "first_name", "last_name", "street", "city", "state" ]
+        			},
+        			"name_phone": {
+        				"attributes": [ "first_name", "last_name", "phone" ]
+        			},
+        			"name_email": {
+        				"attributes": [ "first_name", "last_name", "email" ]
+        			},
+        			"email_phone": {
+        				"attributes": [ "email", "phone" ]
+        			}
+        		//}
+        	};
+
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.resolvers).to.eql(expectedResolvers);
+        });
+
+
+        insomnia.test('Check if matchers match', () => {
+        	const expectedMatchers = {
+        		//"matchers": {
+        			"simple": {
+        				"clause": {
+        					"match": {
+        						"{{ field }}": "{{ value }}"
+        					}
+        				}
+        			},
+        			"fuzzy": {
+        				"clause": {
+        					"match": {
+        						"{{ field }}": {
+        							"query": "{{ value }}",
+        							"fuzziness": "1"
+        						}
+        					}
+        				}
+        			},
+        			"exact": {
+        				"clause": {
+        					"term": {
+        						"{{ field }}": "{{ value }}"
+        					}
+        				}
+        			}
+        		//}
+        	};
+
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.matchers).to.eql(expectedMatchers);
+        });
+
+
+        insomnia.test('Check if indices match', () => {
+        	const expectedIndices = {
+        		//"indices": {
+        			"zentity_tutorial_4_multiple_resolver_resolution": {
+        				"fields": {
+        					"first_name.clean": {
+        						"attribute": "first_name",
+        						"matcher": "fuzzy"
+        					},
+        					"first_name.phonetic": {
+        						"attribute": "first_name",
+        						"matcher": "simple"
+        					},
+        					"last_name.clean": {
+        						"attribute": "last_name",
+        						"matcher": "fuzzy"
+        					},
+        					"last_name.phonetic": {
+        						"attribute": "last_name",
+        						"matcher": "simple"
+        					},
+        					"street.clean": {
+        						"attribute": "street",
+        						"matcher": "fuzzy"
+        					},
+        					"city.clean": {
+        						"attribute": "city",
+        						"matcher": "fuzzy"
+        					},
+        					"state.keyword": {
+        						"attribute": "state",
+        						"matcher": "exact"
+        					},
+        					"phone.clean": {
+        						"attribute": "phone",
+        						"matcher": "fuzzy"
+        					},
+        					"email.keyword": {
+        						"attribute": "email",
+        						"matcher": "exact"
+        					}
+        				}
+        			}
+        		//}
+        	};
+
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.indices).to.eql(expectedIndices);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_4_person"
+    name: 4. Create entity model
+    meta:
+      id: req_8f28e1a518fb444f8168ee06ecc68fa3
+      created: 1750373877307
+      modified: 1750396155786
+      isPrivate: false
+      description: ""
+      sortKey: -1750373877307
+    method: PUT
+    body:
+      mimeType: application/json
+      text: >-
+        {
+          "attributes": {
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "street": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            }
+          },
+          "resolvers": {
+            "name_street_city_state": {
+              "attributes": [ "first_name", "last_name", "street", "city", "state" ]
+            },
+            "name_phone": {
+              "attributes": [ "first_name", "last_name", "phone" ]
+            },
+            "name_email": {
+              "attributes": [ "first_name", "last_name", "email" ]
+            },
+            "email_phone": {
+              "attributes": [ "email", "phone" ]
+            }
+          },
+          "matchers": {
+            "simple": {
+              "clause": {
+                "match": {
+                  "{{ field }}": "{{ value }}"
+                }
+              }
+            },
+            "fuzzy": {
+              "clause": {
+                "match": {
+                  "{{ field }}": {
+                    "query": "{{ value }}",
+                    "fuzziness": "1"
+                  }
+                }
+              }
+            },
+            "exact": {
+              "clause": {
+                "term": {
+                  "{{ field }}": "{{ value }}"
+                }
+              }
+            }
+          },
+          "indices": {
+            "zentity_tutorial_4_multiple_resolver_resolution": {
+              "fields": {
+                "first_name.clean": {
+                  "attribute": "first_name",
+                  "matcher": "fuzzy"
+                },
+                "first_name.phonetic": {
+                  "attribute": "first_name",
+                  "matcher": "simple"
+                },
+                "last_name.clean": {
+                  "attribute": "last_name",
+                  "matcher": "fuzzy"
+                },
+                "last_name.phonetic": {
+                  "attribute": "last_name",
+                  "matcher": "simple"
+                },
+                "street.clean": {
+                  "attribute": "street",
+                  "matcher": "fuzzy"
+                },
+                "city.clean": {
+                  "attribute": "city",
+                  "matcher": "fuzzy"
+                },
+                "state.keyword": {
+                  "attribute": "state",
+                  "matcher": "exact"
+                },
+                "phone.clean": {
+                  "attribute": "phone",
+                  "matcher": "fuzzy"
+                },
+                "email.keyword": {
+                  "attribute": "email",
+                  "matcher": "exact"
+                }
+              }
+            }
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    settings:
+      renderRequestBody: false
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_bulk?refresh"
+    name: 3. Load data
+    meta:
+      id: req_fca2aa4614c04b34af0fafc4aca7bcba
+      created: 1750373877465
+      modified: 1750391435785
+      isPrivate: false
+      description: ""
+      sortKey: -1750373877465
+    method: POST
+    body:
+      mimeType: ""
+      text: >
+        {"index": {"_id": "1", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "allie@example.net", "first_name":
+        "Allie", "id": "1", "last_name": "Jones", "phone": "202-555-1234",
+        "state": "DC", "street": "123 Main St"}
+
+        {"index": {"_id": "2", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "", "first_name": "Alicia", "id": "2",
+        "last_name": "Johnson", "phone": "202-123-4567", "state": "DC",
+        "street": "300 Main St"}
+
+        {"index": {"_id": "3", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "", "first_name": "Allie", "id": "3",
+        "last_name": "Jones", "phone": "", "state": "DC", "street": "123 Main
+        St"}
+
+        {"index": {"_id": "4", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "", "email": "", "first_name": "Ally", "id": "4", "last_name":
+        "Joans", "phone": "202-555-1234", "state": "", "street": ""}
+
+        {"index": {"_id": "5", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Arlington", "email": "ej@example.net", "first_name": "Eli",
+        "id": "5", "last_name": "Jonas", "phone": "", "state": "VA", "street":
+        "500 23rd Street"}
+
+        {"index": {"_id": "6", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "allie@example.net", "first_name":
+        "Allison", "id": "6", "last_name": "Jones", "phone": "202-555-1234",
+        "state": "DC", "street": "123 Main St"}
+
+        {"index": {"_id": "7", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "", "first_name": "Allison", "id": "7",
+        "last_name": "Smith", "phone": "+1 (202) 555 1234", "state": "DC",
+        "street": "555 Broad St"}
+
+        {"index": {"_id": "8", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "alan.smith@example.net", "first_name":
+        "Alan", "id": "8", "last_name": "Smith", "phone": "202-000-5555",
+        "state": "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "9", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "alan.smith@example.net", "first_name":
+        "Alan", "id": "9", "last_name": "Smith", "phone": "2020005555", "state":
+        "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "10", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "", "first_name": "Alison", "id": "10",
+        "last_name": "Smith", "phone": "202-555-9876", "state": "DC", "street":
+        "555 Broad St"}
+
+        {"index": {"_id": "11", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "", "email": "allie@example.net", "first_name": "Alison", "id":
+        "11", "last_name": "Jones-Smith", "phone": "2025559867", "state": "",
+        "street": ""}
+
+        {"index": {"_id": "12", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Washington", "email": "allison.j.smith@corp.example.net",
+        "first_name": "Allison", "id": "12", "last_name": "Jones-Smith",
+        "phone": "", "state": "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "13", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Arlington", "email": "allison.j.smith@corp.example.net",
+        "first_name": "Allison", "id": "13", "last_name": "Jones Smith",
+        "phone": "703-555-5555", "state": "VA", "street": "1 Corporate Way"}
+
+        {"index": {"_id": "14", "_index":
+        "zentity_tutorial_4_multiple_resolver_resolution"}}
+
+        {"city": "Arlington", "email": "elise.jonas@corp.example.net",
+        "first_name": "Elise", "id": "14", "last_name": "Jonas", "phone":
+        "703-555-5555", "state": "VA", "street": "1 Corporate Way"}
+    headers:
+      - name: Content-Type
+        value: application/x-ndjson
+        id: pair_69255299463d42148b780ad11f698a24
+      - name: User-Agent
+        value: insomnia/11.2.0
+        id: pair_88d4a2572cce4d9e8b0c5764fd0f1834
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/zentity_tutorial_4_multiple_resolver_resolution"
+    name: 2. Create index
+    meta:
+      id: req_0883c29a43734750bdb643ca916ab8ea
+      created: 1750373877618
+      modified: 1750391420342
+      isPrivate: false
+      description: ""
+      sortKey: -1750373877618
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "settings": {
+            "index": {
+              "number_of_shards": 1,
+              "number_of_replicas": 0,
+              "analysis" : {
+                "filter" : {
+                  "street_suffix_map" : {
+                    "pattern" : "(st)",
+                    "type" : "pattern_replace",
+                    "replacement" : "street"
+                  },
+                  "phonetic" : {
+                    "type" : "phonetic",
+                    "encoder" : "nysiis"
+                  },
+                  "punct_white" : {
+                    "pattern" : "\\p{Punct}",
+                    "type" : "pattern_replace",
+                    "replacement" : " "
+                  },
+                  "remove_non_digits" : {
+                    "pattern" : "[^\\d]",
+                    "type" : "pattern_replace",
+                    "replacement" : ""
+                  }
+                },
+                "analyzer" : {
+                  "name_clean" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white"
+                    ],
+                    "tokenizer" : "standard"
+                  },
+                  "name_phonetic" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white",
+                      "phonetic"
+                    ],
+                    "tokenizer" : "standard"
+                  },
+                  "street_clean" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white",
+                      "trim"
+                    ],
+                    "tokenizer" : "keyword"
+                  },
+                  "phone_clean" : {
+                    "filter" : [
+                      "remove_non_digits"
+                    ],
+                    "tokenizer" : "keyword"
+                  }
+                }
+              }
+            }
+          },
+          "mappings": {
+            "properties": {
+              "id": {
+                "type": "keyword"
+              },
+              "first_name": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  },
+                  "phonetic": {
+                    "type": "text",
+                    "analyzer": "name_phonetic"
+                  }
+                }
+              },
+              "last_name": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  },
+                  "phonetic": {
+                    "type": "text",
+                    "analyzer": "name_phonetic"
+                  }
+                }
+              },
+              "street": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "street_clean"
+                  }
+                }
+              },
+              "city": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  }
+                }
+              },
+              "state": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "phone": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "phone_clean"
+                  }
+                }
+              },
+              "email": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              }
+            }
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/zentity_tutorial_4_*"
+    name: 1. Delete index
+    meta:
+      id: req_f185b8a5e3ae48ec93c91dba1d7cae13
+      created: 1750373877779
+      modified: 1750392186851
+      isPrivate: false
+      description: ""
+      sortKey: -1750373877779
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      preRequest: ""
+      afterResponse: |-
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_4_person"
+    name: 0. Delete entity model
+    meta:
+      id: req_b3d115de6f1e4a4c827069b501f1a8bc
+      created: 1750373877909
+      modified: 1750392083023
+      isPrivate: false
+      description: ""
+      sortKey: -1750373877909
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: |-
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+        insomnia.test('Check if result is deleted', () => {
+        	const jsonBody = insomnia.response.json();
+
+        	insomnia.expect(jsonBody.result).to.be.oneOf(["deleted", "not_found"]);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_4_person?pretty&_source=true"
+    name: 7. Resolution with source
+    meta:
+      id: req_1799f9cdb03d4aba85d572fdf8c290dc
+      created: 1750373939631
+      modified: 1750395972381
+      isPrivate: false
+      description: ""
+      sortKey: -1750373876960.5
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allie" ],
+            "last_name": [ "Jones" ],
+            "phone": [ "202-555-1234" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResponse = {
+          "took" : 43,
+          "hits" : {
+            "total" : 9,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "1",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "allie@example.net",
+                "first_name" : "Allie",
+                "id" : "1",
+                "last_name" : "Jones",
+                "phone" : "202-555-1234",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "4",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "" ],
+                "email" : [ "" ],
+                "first_name" : [ "Ally" ],
+                "last_name" : [ "Joans" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "" ],
+                "street" : [ "" ]
+              },
+              "_source" : {
+                "city" : "",
+                "email" : "",
+                "first_name" : "Ally",
+                "id" : "4",
+                "last_name" : "Joans",
+                "phone" : "202-555-1234",
+                "state" : "",
+                "street" : ""
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "3",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Allie",
+                "id" : "3",
+                "last_name" : "Jones",
+                "phone" : "",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "6",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones" ],
+                "phone" : [ "202-555-1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "123 Main St" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "allie@example.net",
+                "first_name" : "Allison",
+                "id" : "6",
+                "last_name" : "Jones",
+                "phone" : "202-555-1234",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "11",
+              "_hop" : 2,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "" ],
+                "email" : [ "allie@example.net" ],
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "2025559867" ],
+                "state" : [ "" ],
+                "street" : [ "" ]
+              },
+              "_source" : {
+                "city" : "",
+                "email" : "allie@example.net",
+                "first_name" : "Alison",
+                "id" : "11",
+                "last_name" : "Jones-Smith",
+                "phone" : "2025559867",
+                "state" : "",
+                "street" : ""
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "7",
+              "_hop" : 3,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "+1 (202) 555 1234" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Allison",
+                "id" : "7",
+                "last_name" : "Smith",
+                "phone" : "+1 (202) 555 1234",
+                "state" : "DC",
+                "street" : "555 Broad St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "10",
+              "_hop" : 3,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "" ],
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "202-555-9876" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Alison",
+                "id" : "10",
+                "last_name" : "Smith",
+                "phone" : "202-555-9876",
+                "state" : "DC",
+                "street" : "555 Broad St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "12",
+              "_hop" : 4,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Washington" ],
+                "email" : [ "allison.j.smith@corp.example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "" ],
+                "state" : [ "DC" ],
+                "street" : [ "555 Broad St" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "allison.j.smith@corp.example.net",
+                "first_name" : "Allison",
+                "id" : "12",
+                "last_name" : "Jones-Smith",
+                "phone" : "",
+                "state" : "DC",
+                "street" : "555 Broad St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_4_multiple_resolver_resolution",
+              "_id" : "13",
+              "_hop" : 5,
+              "_query" : 0,
+              "_attributes" : {
+                "city" : [ "Arlington" ],
+                "email" : [ "allison.j.smith@corp.example.net" ],
+                "first_name" : [ "Allison" ],
+                "last_name" : [ "Jones Smith" ],
+                "phone" : [ "703-555-5555" ],
+                "state" : [ "VA" ],
+                "street" : [ "1 Corporate Way" ]
+              },
+              "_source" : {
+                "city" : "Arlington",
+                "email" : "allison.j.smith@corp.example.net",
+                "first_name" : "Allison",
+                "id" : "13",
+                "last_name" : "Jones Smith",
+                "phone" : "703-555-5555",
+                "state" : "VA",
+                "street" : "1 Corporate Way"
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(9);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(9);
+        });
+
+
+        insomnia.test('Hit objects have required properties including _source',
+        () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes', '_source');
+          });
+        });
+
+
+        insomnia.test('Source objects have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._source).to.have.all.keys('city', 'email', 'first_name', 'id', 'last_name', 'phone', 'state', 'street');
+          });
+        });
+
+
+        insomnia.test('Hop progression shows multi-level resolution', () => {
+          const expectedHops = [0, 0, 1, 1, 2, 3, 3, 4, 5];
+          response.hits.hits.forEach((hit, index) => {
+            insomnia.expect(hit._hop).to.eql(expectedHops[index]);
+          });
+        });
+
+
+        insomnia.test('Hit IDs are correct', () => {
+          const expectedIds = ['1', '4', '3', '6', '11', '7', '10', '12', '13'];
+          response.hits.hits.forEach((hit, index) => {
+            insomnia.expect(hit._id).to.eql(expectedIds[index]);
+          });
+        });
+
+
+        insomnia.test('Attributes match source data', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._attributes.city[0]).to.eql(hit._source.city);
+            insomnia.expect(hit._attributes.email[0]).to.eql(hit._source.email);
+            insomnia.expect(hit._attributes.first_name[0]).to.eql(hit._source.first_name);
+            insomnia.expect(hit._attributes.last_name[0]).to.eql(hit._source.last_name);
+            insomnia.expect(hit._attributes.phone[0]).to.eql(hit._source.phone);
+            insomnia.expect(hit._attributes.state[0]).to.eql(hit._source.state);
+            insomnia.expect(hit._attributes.street[0]).to.eql(hit._source.street);
+          });
+        });
+
+
+        insomnia.test('Source IDs match hit IDs', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._source.id).to.eql(hit._id);
+          });
+        });
+
+
+        insomnia.test('Initial hop 0 hits have different data completeness', ()
+        => {
+          const hop0Hits = response.hits.hits.filter(hit => hit._hop === 0);
+          
+          // First hit (ID 1) has complete data
+          insomnia.expect(hop0Hits[0]._source.city).to.eql('Washington');
+          insomnia.expect(hop0Hits[0]._source.email).to.eql('allie@example.net');
+          
+          // Second hit (ID 4) has minimal data
+          insomnia.expect(hop0Hits[1]._source.city).to.eql('');
+          insomnia.expect(hop0Hits[1]._source.email).to.eql('');
+        });
+
+
+        insomnia.test('Phone number formats vary across resolution chain', () =>
+        {
+          const phoneFormats = response.hits.hits.map(hit => hit._source.phone).filter(phone => phone !== '');
+          insomnia.expect(phoneFormats).to.include('202-555-1234');
+          insomnia.expect(phoneFormats).to.include('2025559867');
+          insomnia.expect(phoneFormats).to.include('+1 (202) 555 1234');
+          insomnia.expect(phoneFormats).to.include('202-555-9876');
+          insomnia.expect(phoneFormats).to.include('703-555-5555');
+        });
+
+
+        insomnia.test('Email progression shows entity evolution', () => {
+          const emailProgression = response.hits.hits.map(hit => hit._source.email).filter(email => email !== '');
+          insomnia.expect(emailProgression).to.include('allie@example.net');
+          insomnia.expect(emailProgression).to.include('allison.j.smith@corp.example.net');
+        });
+
+
+        insomnia.test('Geographic progression shows location changes', () => {
+          const finalHit = response.hits.hits[8];
+          insomnia.expect(finalHit._source.city).to.eql('Arlington');
+          insomnia.expect(finalHit._source.state).to.eql('VA');
+          insomnia.expect(finalHit._source.street).to.eql('1 Corporate Way');
+          
+          const dcHits = response.hits.hits.filter(hit => hit._source.state === 'DC');
+          insomnia.expect(dcHits.length).to.be.above(5);
+        });
+
+
+        insomnia.test('Name variations show complete progression', () => {
+          const firstNames = response.hits.hits.map(hit => hit._source.first_name);
+          const lastNames = response.hits.hits.map(hit => hit._source.last_name);
+          
+          insomnia.expect(firstNames).to.include('Allie');
+          insomnia.expect(firstNames).to.include('Ally');
+          insomnia.expect(firstNames).to.include('Allison');
+          insomnia.expect(firstNames).to.include('Alison');
+          
+          insomnia.expect(lastNames).to.include('Jones');
+          insomnia.expect(lastNames).to.include('Joans');
+          insomnia.expect(lastNames).to.include('Smith');
+          insomnia.expect(lastNames).to.include('Jones-Smith');
+          insomnia.expect(lastNames).to.include('Jones Smith');
+        });
+
+
+        insomnia.test('Street addresses show location patterns', () => {
+          const streets = response.hits.hits.map(hit => hit._source.street).filter(street => street !== '');
+          insomnia.expect(streets).to.include('123 Main St');
+          insomnia.expect(streets).to.include('555 Broad St');
+          insomnia.expect(streets).to.include('1 Corporate Way');
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_2d32ad2a4869e8e6f8fc9090f934c312598ecb8c
+    created: 1750367967760
+    modified: 1750396175398
+environments:
+  name: Base Environment
+  meta:
+    id: env_2d32ad2a4869e8e6f8fc9090f934c312598ecb8c
+    created: 1750367967760
+    modified: 1750396175398
+    isPrivate: false

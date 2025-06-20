@@ -939,7 +939,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeExcludeIndicesTypeArray() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(validScopeIndicesTypeArray));
+        String requestBody = inputScopeExcludeIndices(validScopeIndicesTypeArray);
         Input input = new Input(requestBody);
         Assert.assertFalse(input.model().indices().containsKey("index_name_a"));
         Assert.assertTrue(input.model().indices().containsKey("index_name_b"));
@@ -948,7 +948,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeExcludeIndicesTypeArrayEmpty() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(validScopeIndicesTypeArrayEmpty));
+        String requestBody = inputScopeExcludeIndices(validScopeIndicesTypeArrayEmpty);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().indices().containsKey("index_name_a"));
         Assert.assertTrue(input.model().indices().containsKey("index_name_b"));
@@ -957,7 +957,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeExcludeIndicesTypeNull() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(validScopeIndicesTypeNull));
+        String requestBody = inputScopeExcludeIndices(validScopeIndicesTypeNull);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().indices().containsKey("index_name_a"));
         Assert.assertTrue(input.model().indices().containsKey("index_name_b"));
@@ -966,7 +966,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeExcludeIndicesTypeString() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(validScopeIndicesTypeString));
+        String requestBody = inputScopeExcludeIndices(validScopeIndicesTypeString);
         Input input = new Input(requestBody);
         Assert.assertFalse(input.model().indices().containsKey("index_name_a"));
         Assert.assertTrue(input.model().indices().containsKey("index_name_b"));
@@ -975,61 +975,61 @@ public class InputTest {
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesNotFoundArray() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesNotFoundArray));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesNotFoundArray);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesNotFoundString() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesNotFoundString));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesNotFoundString);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesTypeArrayFloat() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesTypeArrayFloat));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesTypeArrayFloat);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesTypeArrayInteger() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesTypeArrayInteger));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesTypeArrayInteger);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesTypeArrayNull() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesTypeArrayNull));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesTypeArrayNull);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesTypeArrayObject() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesTypeArrayObject));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesTypeArrayObject);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesTypeArrayStringEmpty() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesTypeArrayStringEmpty));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesTypeArrayStringEmpty);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesTypeFloat() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesTypeFloat));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesTypeFloat);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesTypeInteger() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesTypeInteger));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesTypeInteger);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeIndicesTypeObject() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeIndices(invalidScopeIndicesTypeObject));
+        String requestBody = inputScopeExcludeIndices(invalidScopeIndicesTypeObject);
         new Input(requestBody);
     }
 
@@ -1037,7 +1037,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeIncludeIndicesTypeArray() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(validScopeIndicesTypeArray));
+        String requestBody = inputScopeIncludeIndices(validScopeIndicesTypeArray);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().indices().containsKey("index_name_a"));
         Assert.assertFalse(input.model().indices().containsKey("index_name_b"));
@@ -1046,7 +1046,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeIncludeIndicesTypeArrayEmpty() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(validScopeIndicesTypeArrayEmpty));
+        String requestBody = inputScopeIncludeIndices(validScopeIndicesTypeArrayEmpty);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().indices().containsKey("index_name_a"));
         Assert.assertTrue(input.model().indices().containsKey("index_name_b"));
@@ -1055,7 +1055,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeIncludeIndicesTypeNull() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(validScopeIndicesTypeNull));
+        String requestBody = inputScopeIncludeIndices(validScopeIndicesTypeNull);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().indices().containsKey("index_name_a"));
         Assert.assertTrue(input.model().indices().containsKey("index_name_b"));
@@ -1064,7 +1064,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeIncludeIndicesTypeString() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(validScopeIndicesTypeString));
+        String requestBody = inputScopeIncludeIndices(validScopeIndicesTypeString);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().indices().containsKey("index_name_a"));
         Assert.assertFalse(input.model().indices().containsKey("index_name_b"));
@@ -1073,61 +1073,61 @@ public class InputTest {
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesNotFoundArray() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesNotFoundArray));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesNotFoundArray);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesNotFoundString() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesNotFoundString));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesNotFoundString);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesTypeArrayFloat() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesTypeArrayFloat));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesTypeArrayFloat);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesTypeArrayInteger() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesTypeArrayInteger));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesTypeArrayInteger);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesTypeArrayObject() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesTypeArrayObject));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesTypeArrayObject);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesTypeArrayNull() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesTypeArrayNull));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesTypeArrayNull);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesTypeArrayStringEmpty() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesTypeArrayStringEmpty));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesTypeArrayStringEmpty);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesTypeFloat() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesTypeFloat));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesTypeFloat);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesTypeInteger() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesTypeInteger));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesTypeInteger);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeIndicesTypeObject() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeIndices(invalidScopeIndicesTypeObject));
+        String requestBody = inputScopeIncludeIndices(invalidScopeIndicesTypeObject);
         new Input(requestBody);
     }
 
@@ -1135,7 +1135,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeExcludeResolversTypeArray() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(validScopeResolversTypeArray));
+        String requestBody = inputScopeExcludeResolvers(validScopeResolversTypeArray);
         Input input = new Input(requestBody);
         Assert.assertFalse(input.model().resolvers().containsKey("resolver_name_a"));
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_b"));
@@ -1144,7 +1144,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeExcludeResolversTypeArrayEmpty() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(validScopeResolversTypeArrayEmpty));
+        String requestBody = inputScopeExcludeResolvers(validScopeResolversTypeArrayEmpty);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_a"));
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_b"));
@@ -1153,7 +1153,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeExcludeResolversTypeNull() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(validScopeResolversTypeNull));
+        String requestBody = inputScopeExcludeResolvers(validScopeResolversTypeNull);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_a"));
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_b"));
@@ -1162,7 +1162,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeExcludeResolversTypeString() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(validScopeResolversTypeString));
+        String requestBody = inputScopeExcludeResolvers(validScopeResolversTypeString);
         Input input = new Input(requestBody);
         Assert.assertFalse(input.model().resolvers().containsKey("resolver_name_a"));
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_b"));
@@ -1171,61 +1171,61 @@ public class InputTest {
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversNotFoundArray() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversNotFoundArray));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversNotFoundArray);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversNotFoundString() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversNotFoundString));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversNotFoundString);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversTypeArrayFloat() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversTypeArrayFloat));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversTypeArrayFloat);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversTypeArrayInteger() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversTypeArrayInteger));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversTypeArrayInteger);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversTypeArrayObject() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversTypeArrayObject));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversTypeArrayObject);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversTypeArrayNull() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversTypeArrayNull));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversTypeArrayNull);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversTypeArrayStringEmpty() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversTypeArrayStringEmpty));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversTypeArrayStringEmpty);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversTypeFloat() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversTypeFloat));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversTypeFloat);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversTypeInteger() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversTypeInteger));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversTypeInteger);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeExcludeResolversTypeObject() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeExcludeResolvers(invalidScopeResolversTypeObject));
+        String requestBody = inputScopeExcludeResolvers(invalidScopeResolversTypeObject);
         new Input(requestBody);
     }
 
@@ -1233,7 +1233,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeIncludeResolversTypeArray() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(validScopeResolversTypeArray));
+        String requestBody = inputScopeIncludeResolvers(validScopeResolversTypeArray);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_a"));
         Assert.assertFalse(input.model().resolvers().containsKey("resolver_name_b"));
@@ -1242,7 +1242,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeIncludeResolversTypeArrayEmpty() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(validScopeResolversTypeArrayEmpty));
+        String requestBody = inputScopeIncludeResolvers(validScopeResolversTypeArrayEmpty);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_a"));
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_b"));
@@ -1251,7 +1251,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeIncludeResolversTypeNull() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(validScopeResolversTypeNull));
+        String requestBody = inputScopeIncludeResolvers(validScopeResolversTypeNull);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_a"));
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_b"));
@@ -1260,7 +1260,7 @@ public class InputTest {
 
     @Test
     public void testValidScopeIncludeResolversTypeString() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(validScopeResolversTypeString));
+        String requestBody = inputScopeIncludeResolvers(validScopeResolversTypeString);
         Input input = new Input(requestBody);
         Assert.assertTrue(input.model().resolvers().containsKey("resolver_name_a"));
         Assert.assertFalse(input.model().resolvers().containsKey("resolver_name_b"));
@@ -1269,63 +1269,61 @@ public class InputTest {
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversNotFoundArray() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversNotFoundArray));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversNotFoundArray);
         new Input(requestBody);
-
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversNotFoundString() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversNotFoundString));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversNotFoundString);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversTypeArrayFloat() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversTypeArrayFloat));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversTypeArrayFloat);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversTypeArrayInteger() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversTypeArrayInteger));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversTypeArrayInteger);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversTypeArrayObject() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversTypeArrayObject));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversTypeArrayObject);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversTypeArrayNull() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversTypeArrayNull));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversTypeArrayNull);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversTypeArrayStringEmpty() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversTypeArrayStringEmpty));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversTypeArrayStringEmpty);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversTypeFloat() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversTypeFloat));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversTypeFloat);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversTypeInteger() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversTypeInteger));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversTypeInteger);
         new Input(requestBody);
     }
 
     @Test(expected = ValidationException.class)
     public void testInvalidScopeIncludeResolversTypeObject() throws Exception {
-        JsonNode requestBody = parseRequestBody(inputScopeIncludeResolvers(invalidScopeResolversTypeObject));
+        String requestBody = inputScopeIncludeResolvers(invalidScopeResolversTypeObject);
         new Input(requestBody);
     }
-
 }

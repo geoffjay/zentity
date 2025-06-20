@@ -17,7 +17,7 @@
  */
 package io.zentity.common;
 
-import org.elasticsearch.core.Tuple;
+import org.opensearch.plugin.zentity.Tuple;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,7 +46,7 @@ public class StreamUtil {
                 return Stream.empty();
             }
 
-            return Stream.of(Tuple.tuple(v1.get(), item));
+            return Stream.of(new Tuple<>(v1.get(), item));
         };
     }
 }

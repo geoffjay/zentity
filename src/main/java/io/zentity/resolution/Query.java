@@ -28,16 +28,17 @@ import io.zentity.resolution.input.Input;
 import io.zentity.resolution.input.Term;
 import io.zentity.resolution.input.value.StringValue;
 import io.zentity.resolution.input.value.Value;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.core.TimeValue;
-import org.elasticsearch.search.SearchModule;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.xcontent.DeprecationHandler;
-import org.elasticsearch.xcontent.NamedXContentRegistry;
-import org.elasticsearch.xcontent.XContentFactory;
-import org.elasticsearch.xcontent.XContentParser;
-import org.elasticsearch.xcontent.XContentType;
+import org.opensearch.action.search.SearchAction;
+import org.opensearch.action.search.SearchRequestBuilder;
+import org.opensearch.common.settings.Settings;
+import org.opensearch.common.unit.TimeValue;
+import org.opensearch.search.SearchModule;
+import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.core.xcontent.DeprecationHandler;
+import org.opensearch.core.xcontent.NamedXContentRegistry;
+import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.core.xcontent.XContentParser;
+import org.opensearch.common.xcontent.XContentType;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -406,11 +407,11 @@ public class Query {
     public static SearchRequestBuilder buildSearchRequest(Job job, String indexName, String query) throws IOException {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         SearchModule searchModule = new SearchModule(Settings.EMPTY, Collections.emptyList());
-        try (XContentParser parser = XContentFactory.xContent(XContentType.JSON).createParser(new NamedXContentRegistry(searchModule
+        try (XContentParser parser = XContentFactory.jsonBuilder().contentType().xContent().createParser(new NamedXContentRegistry(searchModule
                 .getNamedXContents()), DeprecationHandler.THROW_UNSUPPORTED_OPERATION, new ByteArrayInputStream(query.getBytes()))) {
-            searchSourceBuilder.parseXContent(parser, false, nf -> true);
+            searchSourceBuilder.parseXContent(parser);
         }
-        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(job.client());
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder(job.client(), SearchAction.INSTANCE);
         searchRequestBuilder.setIndices(indexName).setSource(searchSourceBuilder);
         if (job.searchAllowPartialSearchResults() != null)
             searchRequestBuilder.setAllowPartialSearchResults(job.searchAllowPartialSearchResults());

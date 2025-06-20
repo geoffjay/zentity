@@ -27,6 +27,7 @@ import io.zentity.resolution.input.value.Value;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -60,6 +61,23 @@ public class Attribute {
         validateType(type);
         this.name = name;
         this.type = type;
+    }
+
+    /**
+     * Constructor for creating Attribute from Map representation.
+     * This supports XContent-based parsing without Jackson dependencies.
+     */
+    public Attribute(String name, Map<String, Object> attributeMap) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        
+        // Extract type from the model - we'll need to get this from the model context
+        // For now, use a default type or require it to be passed separately
+        this.type = "string"; // Default type
+        
+        if (attributeMap != null) {
+            deserializeFromMap(attributeMap);
+        }
     }
 
     public String name() {
@@ -178,7 +196,7 @@ public class Attribute {
         // Set any values or params that were specified in the input.
         while (valuesNode.hasNext()) {
             JsonNode valueNode = valuesNode.next();
-            this.values().add(Value.create(this.type, valueNode));
+            this.values().add(Value.create(this.type, jsonNodeToObject(valueNode)));
         }
 
         // Set any params that were specified in the input, with the values serialized as strings.
@@ -186,8 +204,13 @@ public class Attribute {
             Map.Entry<String, JsonNode> paramNode = paramsNode.next();
             String paramField = paramNode.getKey();
             JsonNode paramValue = paramNode.getValue();
-            if (paramValue.isObject() || paramValue.isArray())
-                this.params().put(paramField, Json.MAPPER.writeValueAsString(paramValue));
+            if (paramValue.isObject() || paramValue.isArray()) {
+                try {
+                    this.params().put(paramField, Json.MAPPER.writeValueAsString(paramValue));
+                } catch (IOException e) {
+                    this.params().put(paramField, paramValue.toString());
+                }
+            }
             else if (paramValue.isNull())
                 this.params().put(paramField, "null");
             else
@@ -197,5 +220,86 @@ public class Attribute {
 
     public void deserialize(String json) throws ValidationException, IOException {
         deserialize(Json.MAPPER.readTree(json));
+    }
+
+    /**
+     * Public deserialize method for Map representation (XContent migration).
+     */
+    public void deserialize(Map<String, Object> map) throws ValidationException {
+        deserializeFromMap(map);
+    }
+
+    /**
+     * Deserialize attribute from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private void deserializeFromMap(Map<String, Object> attributeMap) throws ValidationException {
+        if (attributeMap == null) {
+            return;
+        }
+        
+        // Parse values if present
+        if (attributeMap.containsKey("values")) {
+            Object valuesObj = attributeMap.get("values");
+            if (valuesObj instanceof List) {
+                List<Object> valuesList = (List<Object>) valuesObj;
+                for (Object valueObj : valuesList) {
+                    if (valueObj != null) {
+                        this.values().add(Value.create(this.type, valueObj));
+                    }
+                }
+            }
+        }
+        
+        // Parse params if present
+        if (attributeMap.containsKey("params")) {
+            Object paramsObj = attributeMap.get("params");
+            if (paramsObj instanceof Map) {
+                Map<String, Object> paramsMap = (Map<String, Object>) paramsObj;
+                for (Map.Entry<String, Object> entry : paramsMap.entrySet()) {
+                    String paramField = entry.getKey();
+                    Object paramValue = entry.getValue();
+                    
+                    if (paramValue == null) {
+                        this.params().put(paramField, "null");
+                    } else {
+                        this.params().put(paramField, paramValue.toString());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Convert JsonNode to appropriate Java Object for Value creation.
+     * This method helps with the Jackson to XContent migration.
+     */
+    private static Object jsonNodeToObject(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) {
+            return null;
+        }
+        if (node.isTextual()) {
+            return node.asText();
+        }
+        if (node.isBoolean()) {
+            return node.asBoolean();
+        }
+        if (node.isNumber()) {
+            if (node.isInt()) {
+                return node.asInt();
+            } else if (node.isLong()) {
+                return node.asLong();
+            } else if (node.isDouble()) {
+                return node.asDouble();
+            } else if (node.isFloatingPointNumber()) {
+                return node.asDouble();
+            } else {
+                return node.asDouble(); // Default to double for other number types
+            }
+        }
+        if (node.isArray() || node.isObject()) {
+            return node.toString(); // Convert complex types to string
+        }
+        return node.asText(); // Fallback to text representation
     }
 }

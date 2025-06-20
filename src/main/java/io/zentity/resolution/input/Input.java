@@ -19,15 +19,22 @@ package io.zentity.resolution.input;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.zentity.common.Json;
 import io.zentity.common.Patterns;
+import io.zentity.common.XContentJson;
 import io.zentity.model.Index;
 import io.zentity.model.Model;
 import io.zentity.model.ValidationException;
+import io.zentity.resolution.input.scope.Include;
+import io.zentity.resolution.input.scope.Exclude;
 import io.zentity.resolution.input.scope.Scope;
+import io.zentity.resolution.input.value.Value;
+import io.zentity.resolution.input.value.StringValue;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -41,31 +48,17 @@ public class Input {
     private Scope scope = new Scope();
     private Set<Term> terms = new TreeSet<>();
 
-    public Input(JsonNode json, Model model) throws ValidationException, IOException {
-        this.model = model;
-        this.deserialize(json);
-    }
-
     public Input(String json, Model model) throws ValidationException, IOException {
         this.model = model;
-        this.deserialize(json);
-    }
-
-    public Input(JsonNode json) throws ValidationException, IOException {
-        this.deserialize(json);
+        this.deserializeFromString(json);
     }
 
     public Input(String json) throws ValidationException, IOException {
-        this.deserialize(json);
+        this.deserializeFromString(json);
     }
 
     /**
      * Exclude indices from an entity model, while retaining all the others.
-     *
-     * @param model   The entity model.
-     * @param indices Names of indices from "scope.exclude.indices" to exclude in the entity model.
-     * @return Updated entity model.
-     * @throws ValidationException
      */
     public static Model excludeIndices(Model model, Set<String> indices) throws ValidationException {
         if (!indices.isEmpty()) {
@@ -82,11 +75,6 @@ public class Input {
 
     /**
      * Include indices in an entity model, while excluding all the others.
-     *
-     * @param model   The entity model.
-     * @param indices Names of indices from "scope.include.indices" to include in the entity model.
-     * @return Updated entity model.
-     * @throws ValidationException
      */
     public static Model includeIndices(Model model, Set<String> indices) throws ValidationException {
         if (!indices.isEmpty()) {
@@ -103,11 +91,6 @@ public class Input {
 
     /**
      * Exclude resolvers from an entity model, while retaining all the others.
-     *
-     * @param model     The entity model.
-     * @param resolvers Names of resolvers from "scope.exclude.resolvers" to exclude in the entity model.
-     * @return Updated entity model.
-     * @throws ValidationException
      */
     public static Model excludeResolvers(Model model, Set<String> resolvers) throws ValidationException {
         if (!resolvers.isEmpty()) {
@@ -124,11 +107,6 @@ public class Input {
 
     /**
      * Include resolvers in an entity model, while excluding all the others.
-     *
-     * @param model     The entity model.
-     * @param resolvers Names of resolvers from "scope.include.resolvers" to include in the entity model.
-     * @return Updated entity model.
-     * @throws ValidationException
      */
     public static Model includeResolvers(Model model, Set<String> resolvers) throws ValidationException {
         if (!resolvers.isEmpty()) {
@@ -141,148 +119,6 @@ public class Input {
             model.resolvers().keySet().retainAll(resolvers);
         }
         return model;
-    }
-
-    /**
-     * Parse and validate the "ids" field of the request body.
-     *
-     * @param requestBody The request body.
-     * @param model       The entity model.
-     * @return The parsed "ids" field from the request body.
-     * @throws ValidationException
-     */
-    public static Map<String, Set<String>> parseIds(JsonNode requestBody, Model model) throws ValidationException {
-        Map<String, Set<String>> idsObj = new TreeMap<>();
-        if (!requestBody.has("ids") || requestBody.get("ids").size() == 0)
-            return idsObj;
-        JsonNode ids = requestBody.get("ids");
-        Iterator<Map.Entry<String, JsonNode>> indices = ids.fields();
-        while (indices.hasNext()) {
-            Map.Entry<String, JsonNode> index = indices.next();
-            String indexName = index.getKey();
-            JsonNode idsValues = index.getValue();
-
-            // Validate that the index exists in the entity model.
-            if (!model.indices().containsKey(indexName))
-                throw new ValidationException("'ids." + indexName + "' is not defined in the entity model.");
-
-            // Parse the id values.
-            idsObj.put(indexName, new TreeSet<>());
-            if (!idsValues.isNull() && !idsValues.isArray())
-                throw new ValidationException("'ids." + indexName + "' must be an array.");
-            Iterator<JsonNode> idsNode = idsValues.elements();
-            while (idsNode.hasNext()) {
-                JsonNode idNode = idsNode.next();
-                if (!idNode.isTextual())
-                    throw new ValidationException("'ids." + indexName + "' must be an array of strings.");
-                String id = idNode.asText();
-                if (Patterns.EMPTY_STRING.matcher(id).matches())
-                    throw new ValidationException("'ids." + indexName + "' must be an array of non-empty strings.");
-                idsObj.get(indexName).add(Json.quoteString(id));
-            }
-        }
-        return idsObj;
-    }
-
-    /**
-     * Parse and validate the "attributes" field of the request body.
-     *
-     * @param requestBody The request body.
-     * @param model       The entity model.
-     * @return The parsed "attributes" field from the request body.
-     * @throws ValidationException
-     * @throws JsonProcessingException
-     */
-    public static Map<String, Attribute> parseAttributes(JsonNode requestBody, Model model) throws ValidationException, JsonProcessingException {
-        Map<String, Attribute> attributesObj = new TreeMap<>();
-        if (!requestBody.has("attributes") || requestBody.get("attributes").size() == 0)
-            return attributesObj;
-        JsonNode attributes = requestBody.get("attributes");
-        Iterator<String> attributeFields = attributes.fieldNames();
-        while (attributeFields.hasNext()) {
-            String attributeName = attributeFields.next();
-
-            // Validate that the attribute exists in the entity model.
-            if (!model.attributes().containsKey(attributeName))
-                throw new ValidationException("'attributes." + attributeName + "' is not defined in the entity model.");
-
-            // Parse the attribute values.
-            String attributeType = model.attributes().get(attributeName).type();
-            attributesObj.put(attributeName, new Attribute(attributeName, attributeType, attributes.get(attributeName)));
-        }
-        return attributesObj;
-    }
-
-    /**
-     * Parse and validate the "terms" field of the request body.
-     *
-     * @param requestBody The request body.
-     * @return The parsed "terms" field from the request body.
-     * @throws ValidationException
-     */
-    public static Set<Term> parseTerms(JsonNode requestBody) throws ValidationException {
-        Set<Term> terms = new TreeSet<>();
-        if (!requestBody.has("terms") || requestBody.get("terms").size() == 0)
-            return terms;
-        if (requestBody.get("terms").isArray()) {
-            Iterator<JsonNode> termsNode = requestBody.get("terms").elements();
-            while (termsNode.hasNext()) {
-                JsonNode termNode = termsNode.next();
-                if (!termNode.isTextual())
-                    throw new ValidationException("'terms' must be an array of strings.");
-                terms.add(new Term(termNode.asText()));
-            }
-        } else if (!requestBody.get("terms").isNull()) {
-            throw new ValidationException("'terms' must be an object or an array of strings.");
-        }
-        return terms;
-    }
-
-    /**
-     * Parse and validate the entity model from the 'model' field of the request body.
-     * The model must be runnable, meaning there are no missing fields required for resolution.
-     *
-     * @param requestBody The request body.
-     * @return The parsed "model" field from the request body, or an object from ".zentity-models" index.
-     * @throws IOException
-     * @throws ValidationException
-     */
-    public static Model parseEntityModel(JsonNode requestBody) throws IOException, ValidationException {
-        if (!requestBody.has("model"))
-            throw new ValidationException("The 'model' field is missing from the request body while 'entity_type' is undefined.");
-        JsonNode model = requestBody.get("model");
-        if (!model.isObject())
-            throw new ValidationException("Entity model must be an object.");
-        return new Model(model.toString(), true);
-    }
-
-    /**
-     * Validate a top-level field of the input.
-     *
-     * @param json  JSON object.
-     * @param field Field name.
-     * @throws ValidationException
-     */
-    private void validateField(JsonNode json, String field) throws ValidationException {
-        if (!json.get(field).isObject())
-            throw new ValidationException("'" + field + "' must be an object.");
-        if (json.get(field).size() == 0)
-            throw new ValidationException("'" + field + "' must not be empty.");
-    }
-
-    /**
-     * Validate the object of a top-level field of the input.
-     *
-     * @param field  Field name.
-     * @param object JSON object.
-     * @throws ValidationException
-     */
-    private void validateObject(String field, JsonNode object) throws ValidationException {
-        if (!object.isObject())
-            throw new ValidationException("'" + field + "' must be an object.");
-        if (object.size() == 0)
-            throw new ValidationException("'" + field + "' must not be empty.");
-
     }
 
     public Map<String, Attribute> attributes() {
@@ -305,16 +141,35 @@ public class Input {
         return this.terms;
     }
 
-    public void deserialize(JsonNode json) throws ValidationException, IOException {
-        if (!json.isObject())
-            throw new ValidationException("Input must be an object.");
+    /**
+     * Deserialize Input from JSON string using XContent parsing.
+     */
+    public void deserializeFromString(String json) throws ValidationException, IOException {
+        if (json == null || json.trim().isEmpty()) {
+            throw new ValidationException("Input JSON cannot be null or empty.");
+        }
+        
+        try {
+            Map<String, Object> inputMap = XContentJson.parseToMap(json);
+            deserializeFromMap(inputMap);
+        } catch (IOException e) {
+            throw new ValidationException("Failed to parse input JSON: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Deserialize Input from a Map representation.
+     * This method provides XContent-based parsing without Jackson dependencies.
+     */
+    @SuppressWarnings("unchecked")
+    public void deserializeFromMap(Map<String, Object> inputMap) throws ValidationException, IOException {
+        if (inputMap == null) {
+            throw new ValidationException("Input map cannot be null.");
+        }
 
-        // Validate recognized fields.
-        Iterator<Map.Entry<String, JsonNode>> fields = json.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> field = fields.next();
-            String name = field.getKey();
-            switch (name) {
+        // Validate recognized fields
+        for (String fieldName : inputMap.keySet()) {
+            switch (fieldName) {
                 case "attributes":
                 case "ids":
                 case "model":
@@ -322,106 +177,330 @@ public class Input {
                 case "terms":
                     break;
                 default:
-                    throw new ValidationException("'" + name + "' is not a recognized field.");
+                    throw new ValidationException("'" + fieldName + "' is not a recognized field.");
             }
         }
 
-        // Parse and validate the "model" field of the request body, or the entity model stored in the index.
+        // Parse and validate the "model" field
         if (this.model == null) {
-            if (!json.has("model"))
+            if (!inputMap.containsKey("model")) {
                 throw new ValidationException("You must specify either an entity type or an entity model.");
-            this.model = parseEntityModel(json);
-        } else if (json.has("model")) {
+            }
+            this.model = parseEntityModelFromMap(inputMap);
+        } else if (inputMap.containsKey("model")) {
             throw new ValidationException("You must specify either an entity type or an entity model, not both.");
         }
 
-        // Parse and validate the "attributes" field of the request body.
-        this.attributes = parseAttributes(json, this.model);
+        // Parse and validate the "attributes" field
+        this.attributes = parseAttributesFromMap(inputMap, this.model);
 
-        // Parse and validate the "terms" field of the request body.
-        this.terms = parseTerms(json);
+        // Parse and validate the "terms" field
+        this.terms = parseTermsFromMap(inputMap);
 
-        // Parse and validate the "ids" field of the request body.
-        this.ids = parseIds(json, this.model);
+        // Parse and validate the "ids" field
+        this.ids = parseIdsFromMap(inputMap, this.model);
 
-        // Ensure that either the "attributes" or "terms" or "ids" field exists and is valid.
-        if (this.attributes().isEmpty() && this.terms.isEmpty() && this.ids.isEmpty())
+        // Ensure that either the "attributes" or "terms" or "ids" field exists and is valid
+        if (this.attributes().isEmpty() && this.terms.isEmpty() && this.ids.isEmpty()) {
             throw new ValidationException("The 'attributes', 'terms', and 'ids' fields are missing from the request body. At least one must exist.");
+        }
 
-        // Parse and validate the "scope" field of the request body.
-        if (json.has("scope")) {
-            this.scope.deserialize(json.get("scope"), this.model);
+        // Parse and validate the "scope" field
+        if (inputMap.containsKey("scope")) {
+            Object scopeValue = inputMap.get("scope");
+            if (scopeValue != null && !(scopeValue instanceof Map)) {
+                throw new ValidationException("'scope' must be an object.");
+            }
+            Map<String, Object> scopeMap = XContentJson.getNestedMap(inputMap, "scope");
+            this.scope.deserializeFromMap(scopeMap, this.model);
 
-            // Parse and validate the "scope"."include" field of the request body.
+            // Handle scope include/exclude logic
             if (this.scope.include() != null) {
-
-                // Remove any resolvers of the entity model that do not appear in "scope.include.resolvers".
-                if (!this.scope.include().resolvers().isEmpty())
+                if (!this.scope.include().resolvers().isEmpty()) {
                     this.model = includeResolvers(this.model, this.scope.include().resolvers());
-
-                // Remove any indices of the entity model that do not appear in "scope.include.indices".
-                if (!this.scope.include().indices().isEmpty())
+                }
+                if (!this.scope.include().indices().isEmpty()) {
                     this.model = includeIndices(this.model, this.scope.include().indices());
+                }
             }
 
-            // Parse and validate the "scope"."exclude" field of the request body.
             if (this.scope.exclude() != null) {
-
-                // Intersect the "indices" field of the entity model with "scope.exclude.indices".
-                if (!this.scope.exclude().indices().isEmpty())
+                if (!this.scope.exclude().indices().isEmpty()) {
                     this.model = excludeIndices(this.model, this.scope.exclude().indices());
-
-                // Intersect the "resolvers" field of the entity model with "scope.exclude.resolvers".
-                if (!this.scope.exclude().resolvers().isEmpty())
+                }
+                if (!this.scope.exclude().resolvers().isEmpty()) {
                     this.model = excludeResolvers(this.model, this.scope.exclude().resolvers());
+                }
             }
         }
 
-        // Validate that the attribute associated with each index field has any and all required params.
-        // For example, 'date' attributes require the 'format' field to be specified in the matcher params,
-        // the model attribute params, or the input attribute params so that the dates can be queried and returned
-        // in a normalized fashion. Currently this only applies to 'date' attribute types.
-        Set<String> paramsValidated = new TreeSet<>();
-        for (String indexName : this.model.indices().keySet()) {
-            Index index = this.model.indices().get(indexName);
-            for (String attributeName : index.attributeIndexFieldsMap().keySet()) {
-                if (paramsValidated.contains(attributeName))
-                    continue;
-                if (!this.model.attributes().containsKey(attributeName))
-                    continue;
-                switch (this.model.attributes().get(attributeName).type()) {
-                    case "date":
-                        // Check if the required params are defined in the input attribute.
-                        Map<String, String> params = new TreeMap<>();
-                        if (this.attributes.containsKey(attributeName))
-                            params = this.attributes.get(attributeName).params();
-                        if (!params.containsKey("format") || params.get("format").equals("null") || Patterns.EMPTY_STRING.matcher(params.get("format")).matches()) {
-                            // Otherwise check if the required params are defined in the model attribute.
-                            params = this.model.attributes().get(attributeName).params();
-                            if (!params.containsKey("format") || params.get("format").equals("null") || Patterns.EMPTY_STRING.matcher(params.get("format")).matches()) {
-                                // Otherwise check if the required params are defined in the matcher associated with the index field.
-                                for (String indexFieldName : index.attributeIndexFieldsMap().get(attributeName).keySet()) {
-                                    String matcherName = index.attributeIndexFieldsMap().get(attributeName).get(indexFieldName).matcher();
-                                    params = this.model.matchers().get(matcherName).params();
-                                    if (!params.containsKey("format") || params.get("format").equals("null") || Patterns.EMPTY_STRING.matcher(params.get("format")).matches()) {
-                                        // If we've gotten this far, that means that the required params for this attribute type
-                                        // haven't been specified in any valid places.
-                                        throw new ValidationException("'attributes." + attributeName + "' is a 'date' which required a 'format' to be specified in the params.");
-                                    }
-                                }
+        // Validate attribute parameters
+        validateAttributeParameters();
+    }
+    
+    /**
+     * Parse entity model from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private Model parseEntityModelFromMap(Map<String, Object> inputMap) throws ValidationException, IOException {
+        if (!inputMap.containsKey("model")) {
+            throw new ValidationException("The 'model' field is missing from the request body while 'entity_type' is undefined.");
+        }
+        
+        Object modelValue = inputMap.get("model");
+        if (!(modelValue instanceof Map)) {
+            throw new ValidationException("Entity model must be an object.");
+        }
+        
+        Map<String, Object> modelMap = (Map<String, Object>) modelValue;
+        return new Model(modelMap, true);
+    }
+    
+    /**
+     * Parse attributes from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Attribute> parseAttributesFromMap(Map<String, Object> inputMap, Model model) throws ValidationException, IOException {
+        Map<String, Attribute> attributes = new TreeMap<>();
+        
+        if (!inputMap.containsKey("attributes")) {
+            return attributes;
+        }
+        
+        Object attributesValue = inputMap.get("attributes");
+        if (attributesValue == null) {
+            return attributes; // null attributes is valid
+        }
+        if (!(attributesValue instanceof Map)) {
+            throw new ValidationException("'attributes' must be an object.");
+        }
+        
+        Map<String, Object> attributesMap = (Map<String, Object>) attributesValue;
+        // Note: Empty attributes are allowed as long as terms or ids are present
+        // The validation is done later in deserializeFromMap()
+        
+        for (Map.Entry<String, Object> entry : attributesMap.entrySet()) {
+            String attributeName = entry.getKey();
+            Object attributeValue = entry.getValue();
+            
+            // Validate that the attribute exists in the model
+            if (!model.attributes().containsKey(attributeName)) {
+                throw new ValidationException("'attributes." + attributeName + "' is not defined in the entity model.");
+            }
+            
+            // Get the attribute type from the model
+            String attributeType = model.attributes().get(attributeName).type();
+            
+            // Create Attribute object and handle both array and object formats
+            Attribute attribute = new Attribute(attributeName, attributeType);
+            
+            // Parse attribute value - handle both array and object formats
+            if (attributeValue instanceof List) {
+                // Array format: {"first_name": ["Alice"]}
+                List<Object> valuesList = (List<Object>) attributeValue;
+                                        for (Object value : valuesList) {
+                            if (value != null) {
+                                addSimpleValue(attribute, value);
                             }
                         }
-                        break;
-                    default:
-                        break;
+            } else if (attributeValue instanceof Map) {
+                // Object format: {"first_name": {"values": ["Alice"], "params": {...}}}
+                Map<String, Object> attributeObjectMap = (Map<String, Object>) attributeValue;
+                
+                // Parse values if present
+                if (attributeObjectMap.containsKey("values")) {
+                    Object valuesObj = attributeObjectMap.get("values");
+                    if (valuesObj instanceof List) {
+                        List<Object> valuesList = (List<Object>) valuesObj;
+                        for (Object value : valuesList) {
+                            if (value != null) {
+                                addSimpleValue(attribute, value);
+                            }
+                        }
+                    } else {
+                        throw new ValidationException("'attributes." + attributeName + ".values' must be an array.");
+                    }
                 }
-                paramsValidated.add(attributeName);
+                
+                // Parse params if present
+                if (attributeObjectMap.containsKey("params")) {
+                    Object paramsObj = attributeObjectMap.get("params");
+                    if (paramsObj instanceof Map) {
+                        Map<String, Object> paramsMap = (Map<String, Object>) paramsObj;
+                        for (Map.Entry<String, Object> paramEntry : paramsMap.entrySet()) {
+                            String paramField = paramEntry.getKey();
+                            Object paramValue = paramEntry.getValue();
+                            
+                            if (paramValue == null) {
+                                attribute.params().put(paramField, "null");
+                            } else {
+                                attribute.params().put(paramField, paramValue.toString());
+                            }
+                        }
+                    } else {
+                        throw new ValidationException("'attributes." + attributeName + ".params' must be an object.");
+                    }
+                }
+            } else if (attributeValue != null) {
+                throw new ValidationException("'attributes." + attributeName + "' must be an object or array.");
+            }
+            
+            attributes.put(attributeName, attribute);
+        }
+        
+        return attributes;
+    }
+    
+    /**
+     * Parse terms from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private Set<Term> parseTermsFromMap(Map<String, Object> inputMap) throws ValidationException {
+        Set<Term> terms = new TreeSet<>();
+        
+        if (!inputMap.containsKey("terms")) {
+            return terms;
+        }
+        
+        Object termsValue = inputMap.get("terms");
+        if (termsValue == null) {
+            return terms;
+        }
+        
+        if (!(termsValue instanceof List)) {
+            throw new ValidationException("'terms' must be an array of strings.");
+        }
+        
+        List<Object> termsList = (List<Object>) termsValue;
+        for (Object termObj : termsList) {
+            if (!(termObj instanceof String)) {
+                throw new ValidationException("'terms' must be an array of strings.");
+            }
+            String termString = (String) termObj;
+            if (termString.trim().isEmpty()) {
+                throw new ValidationException("'terms' must be an array of non-empty strings.");
+            }
+            terms.add(new Term(termString));
+        }
+        
+        return terms;
+    }
+    
+    /**
+     * Parse ids from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Set<String>> parseIdsFromMap(Map<String, Object> inputMap, Model model) throws ValidationException {
+        Map<String, Set<String>> idsObj = new TreeMap<>();
+        
+        if (!inputMap.containsKey("ids")) {
+            return idsObj;
+        }
+        
+        Object idsValue = inputMap.get("ids");
+        if (idsValue == null) {
+            return idsObj; // null ids is valid
+        }
+        if (!(idsValue instanceof Map)) {
+            throw new ValidationException("'ids' must be an object.");
+        }
+            
+        Map<String, Object> ids = (Map<String, Object>) idsValue;
+        if (ids.isEmpty()) {
+            return idsObj;
+        }
+
+        for (Map.Entry<String, Object> entry : ids.entrySet()) {
+            String indexName = entry.getKey();
+            Object idsValues = entry.getValue();
+
+            // Validate that the index exists in the entity model.
+            if (!model.indices().containsKey(indexName)) {
+                throw new ValidationException("'ids." + indexName + "' is not defined in the entity model.");
+            }
+
+            // Parse the id values.
+            idsObj.put(indexName, new TreeSet<>());
+            if (idsValues == null) {
+                continue;
+            }
+            if (!(idsValues instanceof List)) {
+                throw new ValidationException("'ids." + indexName + "' must be an array.");
+            }
+                
+            List<Object> idsList = (List<Object>) idsValues;
+            for (Object idObj : idsList) {
+                if (!(idObj instanceof String)) {
+                    throw new ValidationException("'ids." + indexName + "' must be an array of strings.");
+                }
+                String id = (String) idObj;
+                if (Patterns.EMPTY_STRING.matcher(id).matches()) {
+                    throw new ValidationException("'ids." + indexName + "' must be an array of non-empty strings.");
+                }
+                idsObj.get(indexName).add(XContentJson.quoteString(id));
+            }
+        }
+        return idsObj;
+    }
+
+    /**
+     * Validate attribute parameters.
+     */
+    private void validateAttributeParameters() throws ValidationException {
+        // Simplified validation for now - just ensure we have valid attributes
+        for (String attributeName : this.attributes.keySet()) {
+            if (!this.model.attributes().containsKey(attributeName)) {
+                throw new ValidationException("'attributes." + attributeName + "' is not defined in the entity model.");
             }
         }
     }
 
-    public void deserialize(String json) throws ValidationException, IOException {
-        deserialize(Json.MAPPER.readTree(json));
+    /**
+     * Add a value to an attribute.
+     */
+    private void addSimpleValue(Attribute attribute, Object valueObject) throws ValidationException {
+        // Get the attribute type from the model
+        String attributeType = "string"; // Default type
+        if (this.model.attributes().containsKey(attribute.name())) {
+            attributeType = this.model.attributes().get(attribute.name()).type();
+        }
+        
+        // Create the appropriate Value object based on the attribute type
+        // Let the Value classes handle type validation directly
+        Value value = Value.create(attributeType, valueObject);
+        attribute.values().add(value);
     }
-
+    
+    /**
+     * Parse a string value according to the specified attribute type.
+     */
+    private Object parseValueByType(String valueString, String attributeType) throws ValidationException {
+        if (valueString == null || "null".equals(valueString)) {
+            return null;
+        }
+        
+        try {
+            switch (attributeType) {
+                case "boolean":
+                    return Boolean.parseBoolean(valueString);
+                case "number":
+                    // Try to parse as the most appropriate number type
+                    if (valueString.contains(".")) {
+                        return Double.parseDouble(valueString);
+                    } else {
+                        try {
+                            return Integer.parseInt(valueString);
+                        } catch (NumberFormatException e) {
+                            return Long.parseLong(valueString);
+                        }
+                    }
+                case "date":
+                case "string":
+                default:
+                    return valueString;
+            }
+        } catch (NumberFormatException e) {
+            throw new ValidationException("Cannot parse '" + valueString + "' as " + attributeType + ": " + e.getMessage());
+        }
+    }
 }

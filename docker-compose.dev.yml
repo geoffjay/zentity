@@ -1,0 +1,207 @@
+# Development Docker Compose for Zentity Plugin Testing
+# This file provides both Elasticsearch and OpenSearch environments for development and testing
+# 
+# Usage:
+#   # Start Elasticsearch environment (default)
+#   docker-compose -f docker-compose.dev.yml up elasticsearch
+#   
+#   # Start OpenSearch environment
+#   docker-compose -f docker-compose.dev.yml up opensearch
+#   
+#   # Start both environments (for migration testing)
+#   docker-compose -f docker-compose.dev.yml up elasticsearch opensearch
+#   
+#   # Start with Kibana/OpenSearch Dashboards
+#   docker-compose -f docker-compose.dev.yml up elasticsearch kibana
+#   docker-compose -f docker-compose.dev.yml up opensearch opensearch-dashboards
+
+services:
+  # Elasticsearch 8.17.0 for current plugin development
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION:-8.17.0}
+    container_name: zentity-elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=zentity-dev-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - action.destructive_requires_name=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - http.cors.allow-headers="X-Requested-With,Content-Type,Content-Length,Authorization"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./target/releases:/opt/zentity/releases
+      - ./src/test/resources:/usr/share/elasticsearch/test-data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - zentity-dev
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # OpenSearch 2.17.0 for migration testing
+  opensearch:
+    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:-2.17.0}
+    container_name: zentity-opensearch
+    environment:
+      - node.name=opensearch
+      - cluster.name=zentity-opensearch-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - action.destructive_requires_name=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - http.cors.allow-headers="X-Requested-With,Content-Type,Content-Length,Authorization"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+      - ./target/releases:/opt/zentity/releases
+      - ./src/test/resources:/usr/share/opensearch/test-data
+      - ./sandbox:/opt/zentity/sandbox:ro
+      - ./scripts/opensearch-entrypoint.sh:/usr/local/bin/opensearch-entrypoint.sh:ro
+      - ./scripts/load-zentity-models.sh:/usr/local/bin/load-zentity-models.sh:ro
+    entrypoint: ["/usr/local/bin/opensearch-entrypoint.sh"]
+    ports:
+      - "9201:9200"
+      - "9301:9300"
+    networks:
+      - zentity-dev
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Kibana for Elasticsearch visualization and debugging
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTICSEARCH_VERSION:-8.17.0}
+    container_name: zentity-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
+      - XPACK_SECURITY_ENABLED=false
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a6c10925682e591bffcab6911c06786d
+    ports:
+      - "5601:5601"
+    networks:
+      - zentity-dev
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # OpenSearch Dashboards for OpenSearch visualization and debugging
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:${OPENSEARCH_VERSION:-2.17.0}
+    container_name: zentity-opensearch-dashboards
+    environment:
+      - OPENSEARCH_HOSTS=http://opensearch:9200
+      - SERVER_NAME=opensearch-dashboards
+      - SERVER_HOST=0.0.0.0
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5602:5601"
+    networks:
+      - zentity-dev
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Test data loader service for development
+  test-data-loader:
+    image: curlimages/curl:latest
+    container_name: zentity-test-data-loader
+    volumes:
+      - ./src/test/resources:/data
+      - ./scripts:/scripts
+    networks:
+      - zentity-dev
+    profiles:
+      - tools
+    command: |
+      sh -c "
+        echo 'Test data loader ready. Use this service to load test data into Elasticsearch/OpenSearch.'
+        echo 'Example commands:'
+        echo '  # Load test indices'
+        echo '  curl -X PUT http://elasticsearch:9200/zentity_test_index -H \"Content-Type: application/json\" -d @/data/TestIndex.json'
+        echo '  curl -X PUT http://opensearch:9200/zentity_test_index -H \"Content-Type: application/json\" -d @/data/TestIndex.json'
+        echo ''
+        echo 'Sleeping indefinitely. Use docker exec to run commands.'
+        sleep infinity
+      "
+
+  # Development tools container with Maven, Java, and utilities
+  dev-tools:
+    image: maven:3.9.6-eclipse-temurin-17
+    container_name: zentity-dev-tools
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - maven_cache:/root/.m2
+      - ./scripts:/scripts
+    networks:
+      - zentity-dev
+    profiles:
+      - tools
+    command: |
+      sh -c "
+        echo 'Development tools container ready.'
+        echo 'Available commands:'
+        echo '  # Build plugin'
+        echo '  mvn clean package'
+        echo '  # Run tests'
+        echo '  mvn test'
+        echo '  # Install plugin to Elasticsearch'
+        echo '  /scripts/install-plugin.sh elasticsearch'
+        echo '  # Install plugin to OpenSearch'
+        echo '  /scripts/install-plugin.sh opensearch'
+        echo ''
+        echo 'Sleeping indefinitely. Use docker exec to run commands.'
+        sleep infinity
+      "
+
+volumes:
+  elasticsearch_data:
+    driver: local
+  opensearch_data:
+    driver: local
+  maven_cache:
+    driver: local
+
+networks:
+  zentity-dev:
+    driver: bridge 

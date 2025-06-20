@@ -17,98 +17,204 @@
  */
 package io.zentity.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.io.JsonStringEncoder;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentParser;
+import org.opensearch.common.xcontent.XContentType;
+import org.opensearch.common.xcontent.json.JsonXContent;
 
-import java.util.Iterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class Json {
 
-    public static final ObjectMapper MAPPER = new ObjectMapper();
-    public static final ObjectMapper ORDERED_MAPPER = new ObjectMapper().configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-    private static final JsonStringEncoder STRING_ENCODER = new JsonStringEncoder();
+    // Temporary compatibility fields for gradual migration
+    // TODO: Remove these after completing full XContent migration
+    public static final CompatibilityMapper MAPPER = new CompatibilityMapper();
+    public static final CompatibilityMapper ORDERED_MAPPER = new CompatibilityMapper();
 
+    /**
+     * Temporary compatibility class to help with gradual migration from Jackson.
+     * This returns actual Jackson JsonNode types to maintain compatibility with existing code.
+     */
+    public static class CompatibilityMapper {
+        private final ObjectMapper objectMapper = new ObjectMapper();
+        
+        public JsonNode readTree(String jsonString) throws IOException {
+            return objectMapper.readTree(jsonString);
+        }
+        
+        public String writeValueAsString(Object value) throws IOException {
+            return objectMapper.writeValueAsString(value);
+        }
+        
+        public ArrayNode createArrayNode() {
+            return objectMapper.createArrayNode();
+        }
+        
+        public ObjectNode createObjectNode() {
+            return objectMapper.createObjectNode();
+        }
+        
+        /**
+         * Helper method to add Object values to ArrayNode.
+         * Handles type conversion from Object to appropriate JsonNode types.
+         */
+        public void addToArrayNode(ArrayNode arrayNode, Object value) {
+            if (value == null) {
+                arrayNode.addNull();
+            } else if (value instanceof String) {
+                arrayNode.add((String) value);
+            } else if (value instanceof Integer) {
+                arrayNode.add((Integer) value);
+            } else if (value instanceof Long) {
+                arrayNode.add((Long) value);
+            } else if (value instanceof Double) {
+                arrayNode.add((Double) value);
+            } else if (value instanceof Float) {
+                arrayNode.add((Float) value);
+            } else if (value instanceof Boolean) {
+                arrayNode.add((Boolean) value);
+            } else if (value instanceof JsonNode) {
+                arrayNode.add((JsonNode) value);
+            } else {
+                // Fallback: convert to string
+                arrayNode.add(value.toString());
+            }
+        }
+    }
+
+    /**
+     * Quote a string value for JSON output.
+     *
+     * @param value The string value to quote.
+     * @return The quoted string.
+     */
     public static String quoteString(String value) {
         return jsonStringFormat(value);
     }
 
+    /**
+     * Escape a string value for JSON.
+     *
+     * @param value The string value to escape.
+     * @return The escaped string.
+     */
     private static String jsonStringEscape(String value) {
         if (value == null)
-            return "null"; // Prevents NullPointerException on STRING_ENCODER.quoteAsString()
-        return new String(STRING_ENCODER.quoteAsString(value));
+            return "null";
+        
+        // Simple JSON string escaping
+        return value.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("\b", "\\b")
+                   .replace("\f", "\\f")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
     }
 
+    /**
+     * Add quotes around a string value.
+     *
+     * @param value The string value to quote.
+     * @return The quoted string.
+     */
     private static String jsonStringQuote(String value) {
         return "\"" + value + "\"";
     }
 
+    /**
+     * Format a string value for JSON output.
+     *
+     * @param value The string value to format.
+     * @return The formatted JSON string.
+     */
     private static String jsonStringFormat(String value) {
         return jsonStringQuote(jsonStringEscape(value));
     }
 
-
     /**
-     * Converts an object {@link JsonNode JsonNode's} fields iterator to a {@link Map} of strings.
+     * Converts a Map to a TreeMap of strings for consistent ordering.
      *
-     * @param iterator The object iterator.
-     * @return The node's map representation.
-     * @throws JsonProcessingException If the object cannot be written as a string.
+     * @param map The input map.
+     * @return The string map representation.
+     * @throws IOException If there is an issue processing the map.
      */
-    public static Map<String, String> toStringMap(Iterator<Map.Entry<String, JsonNode>> iterator) throws JsonProcessingException {
-        Map<String, String> map = new TreeMap<>();
-        while (iterator.hasNext()) {
-            Map.Entry<String, JsonNode> paramNode = iterator.next();
-            String paramField = paramNode.getKey();
-            JsonNode paramValue = paramNode.getValue();
-            if (paramValue.isObject() || paramValue.isArray()) {
-                map.put(paramField, MAPPER.writeValueAsString(paramValue));
-            } else if (paramValue.isNull()) {
-                map.put(paramField, "null");
+    public static Map<String, String> toStringMap(Map<String, Object> map) throws IOException {
+        Map<String, String> stringMap = new TreeMap<>();
+        
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            
+            if (value == null) {
+                stringMap.put(key, "null");
+            } else if (value instanceof String) {
+                stringMap.put(key, (String) value);
+            } else if (value instanceof Number || value instanceof Boolean) {
+                stringMap.put(key, value.toString());
+            } else if (value instanceof Map || value instanceof Iterable) {
+                // For complex objects, convert to JSON string
+                try (XContentBuilder builder = JsonXContent.contentBuilder()) {
+                    builder.value(value);
+                    stringMap.put(key, builder.toString());
+                }
             } else {
-                map.put(paramField, paramValue.asText());
+                stringMap.put(key, value.toString());
             }
         }
-        return map;
+        
+        return stringMap;
     }
 
     /**
-     * Converts an object {@link JsonNode} to a {@link Map} of strings.
+     * Converts a JSON string to a Map of strings.
      *
-     * @param node The object node.
-     * @return The node's map representation.
-     * @throws JsonProcessingException If the object cannot be written as a string.
+     * @param jsonString The JSON string to parse.
+     * @return The string map representation.
+     * @throws IOException If there is an issue parsing the JSON.
      */
-    public static Map<String, String> toStringMap(JsonNode node) throws JsonProcessingException {
-        if (!node.isObject()) {
-            throw new IllegalArgumentException("Can only convert JSON objects to maps");
+    @SuppressWarnings("unchecked")
+    public static Map<String, String> toStringMap(String jsonString) throws IOException {
+        try (XContentParser parser = JsonXContent.jsonXContent.createParser(null, null, jsonString)) {
+            Map<String, Object> map = parser.map();
+            return toStringMap(map);
         }
-        return toStringMap(node.fields());
     }
 
     /**
-     * Converts an object JSON {@link String} to a {@link Map} of strings.
+     * Pretty-print a JSON string.
      *
-     * @param jsonString The object node string.
-     * @return The node's map representation.
-     * @throws JsonProcessingException If the object cannot be written/ parsed as a string.
+     * @param json The JSON string to format.
+     * @return The pretty-printed JSON string.
+     * @throws IOException If there is an issue parsing or formatting the JSON.
      */
-    public static Map<String, String> toStringMap(String jsonString) throws JsonProcessingException {
-        return toStringMap(Json.MAPPER.readTree(jsonString));
+    public static String pretty(String json) throws IOException {
+        try (XContentParser parser = JsonXContent.jsonXContent.createParser(null, null, json)) {
+            try (XContentBuilder builder = JsonXContent.contentBuilder().prettyPrint()) {
+                builder.copyCurrentStructure(parser);
+                return builder.toString();
+            }
+        }
     }
 
     /**
-     * Re-serialize a JSON string with pretty-printing.
+     * Parse a JSON string to a Map.
      *
-     * @param json The JSON string.
-     * @return The pretty JSON string.
-     * @throws JsonProcessingException If there is an issue parsing the input.
+     * @param jsonString The JSON string to parse.
+     * @return The parsed map.
+     * @throws IOException If there is an issue parsing the JSON.
      */
-    public static String pretty(String json) throws JsonProcessingException {
-        return Json.ORDERED_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(Json.ORDERED_MAPPER.readTree(json));
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> parseToMap(String jsonString) throws IOException {
+        try (XContentParser parser = JsonXContent.jsonXContent.createParser(null, null, jsonString)) {
+            return parser.map();
+        }
     }
 }

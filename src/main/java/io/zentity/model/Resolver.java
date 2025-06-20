@@ -65,6 +65,19 @@ public class Resolver {
         this.deserialize(json);
     }
 
+    public Resolver(String name, Map<String, Object> map) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        this.deserialize(map);
+    }
+
+    public Resolver(String name, Map<String, Object> map, boolean validateRunnable) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        this.validateRunnable = validateRunnable;
+        this.deserialize(map);
+    }
+
     public String name() {
         return this.name;
     }
@@ -171,6 +184,82 @@ public class Resolver {
 
     public void deserialize(String json) throws ValidationException, IOException {
         deserialize(Json.MAPPER.readTree(json));
+    }
+
+    /**
+     * Deserialize from a Map representation (XContent migration).
+     * 
+     * @param map The resolver map from XContent parsing.
+     * @throws ValidationException If validation fails.
+     */
+    @SuppressWarnings("unchecked")
+    public void deserialize(Map<String, Object> map) throws ValidationException {
+        if (map == null) {
+            throw new ValidationException("'resolvers." + this.name + "' must be an object.");
+        }
+        
+        if (this.validateRunnable && map.isEmpty()) {
+            throw new ValidationException("'resolvers." + this.name + "' must not be empty in the entity model.");
+        }
+
+        // Validate the existence of required fields
+        for (String field : REQUIRED_FIELDS) {
+            if (!map.containsKey(field)) {
+                throw new ValidationException("'resolvers." + this.name + "' is missing required field '" + field + "'.");
+            }
+        }
+
+        // Process each field in the map
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            
+            switch (name) {
+                case "attributes":
+                    if (!(value instanceof Iterable)) {
+                        throw new ValidationException("'resolvers." + this.name + ".attributes' must be an array of strings.");
+                    }
+                    Iterable<?> attributesList = (Iterable<?>) value;
+                    Set<String> attributes = new TreeSet<>();
+                    boolean hasElements = false;
+                    for (Object attribute : attributesList) {
+                        hasElements = true;
+                        if (!(attribute instanceof String)) {
+                            throw new ValidationException("'resolvers." + this.name + ".attributes' must be an array of strings.");
+                        }
+                        String attributeName = (String) attribute;
+                        if (attributeName.isEmpty()) {
+                            throw new ValidationException("'resolvers." + this.name + ".attributes' must be an array of non-empty strings.");
+                        }
+                        attributes.add(attributeName);
+                    }
+                    if (!hasElements) {
+                        throw new ValidationException("'resolvers." + this.name + ".attributes' must not be empty.");
+                    }
+                    this.attributes = attributes;
+                    break;
+                    
+                case "weight":
+                    if (value != null) {
+                        Integer weightValue;
+                        if (value instanceof Number) {
+                            Number numValue = (Number) value;
+                            // Allow floats only if the decimal value is ###.0
+                            if (numValue.floatValue() % 1 != 0.0) {
+                                throw new ValidationException("'resolvers." + this.name + ".weight' must be an integer.");
+                            }
+                            weightValue = numValue.intValue();
+                        } else {
+                            throw new ValidationException("'resolvers." + this.name + ".weight' must be an integer.");
+                        }
+                        this.weight = weightValue;
+                    }
+                    break;
+                    
+                default:
+                    throw new ValidationException("'resolvers." + this.name + "." + name + "' is not a recognized field.");
+            }
+        }
     }
 
 }

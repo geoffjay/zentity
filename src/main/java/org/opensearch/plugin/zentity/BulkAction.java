@@ -15,13 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticsearch.plugin.zentity;
+package org.opensearch.plugin.zentity;
 
 import io.zentity.common.Json;
 import io.zentity.common.Patterns;
 import io.zentity.common.StreamUtil;
 import joptsimple.internal.Strings;
-import org.elasticsearch.core.Tuple;
+import org.opensearch.plugin.zentity.StringsUtil;
+import org.opensearch.plugin.zentity.Tuple;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +57,7 @@ public class BulkAction {
         return "{" +
             Json.quoteString("took") + ":" + result.took +
             "," + Json.quoteString("errors") + ":" + result.errors +
-            "," + Json.quoteString("items") + ":" + "[" + Strings.join(result.items, ",") + "]" +
+                            "," + Json.quoteString("items") + ":" + "[" + StringsUtil.join(result.items, ",") + "]" +
             "}";
     }
 

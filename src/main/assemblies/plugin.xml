@@ -27,6 +27,11 @@
             <outputDirectory>/</outputDirectory>
             <useProjectArtifact>true</useProjectArtifact>
             <useTransitiveFiltering>true</useTransitiveFiltering>
+            <excludes>
+                <exclude>com.fasterxml.jackson.core:jackson-core</exclude>
+                <!-- Only exclude jackson-core since OpenSearch provides it -->
+                <!-- Include jackson-databind and jackson-annotations since OpenSearch doesn't provide them -->
+            </excludes>
         </dependencySet>
     </dependencySets>
 </assembly>

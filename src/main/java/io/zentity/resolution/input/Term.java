@@ -17,10 +17,9 @@
  */
 package io.zentity.resolution.input;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.zentity.common.Json;
 import io.zentity.common.Patterns;
 import io.zentity.model.ValidationException;
+import io.zentity.resolution.input.value.Value;
 import io.zentity.resolution.input.value.BooleanValue;
 import io.zentity.resolution.input.value.DateValue;
 import io.zentity.resolution.input.value.NumberValue;
@@ -33,13 +32,6 @@ import java.text.SimpleDateFormat;
 public class Term implements Comparable<Term> {
 
     private final String term;
-    private Boolean isBoolean;
-    private Boolean isDate;
-    private Boolean isNumber;
-    private BooleanValue booleanValue;
-    private DateValue dateValue;
-    private NumberValue numberValue;
-    private StringValue stringValue;
 
     public Term(String term) throws ValidationException {
         validateTerm(term);
@@ -51,7 +43,9 @@ public class Term implements Comparable<Term> {
             throw new ValidationException("A term must be a non-empty string.");
     }
 
-    public String term() { return this.term; }
+    public String term() { 
+        return this.term; 
+    }
 
     public static boolean isBoolean(String term) {
         String termLowerCase = term.toLowerCase();
@@ -75,94 +69,62 @@ public class Term implements Comparable<Term> {
 
     /**
      * Check if the term string is a boolean value.
-     * Lazily store the decision and then return the decision.
-     *
-     * @return
      */
     public boolean isBoolean() {
-        if (this.isBoolean == null)
-            this.isBoolean = isBoolean(this.term);
-        return this.isBoolean;
+        return isBoolean(this.term);
     }
 
     /**
      * Check if the term string is a date value.
-     * Lazily store the decision and then return the decision.
-     *
-     * @return
      */
     public boolean isDate(String format) {
-        if (this.isDate == null)
-            this.isDate = isDate(this.term, format);
-        return this.isDate;
-    }
-
-    /**
-     * Convert the term to a BooleanValue.
-     * Lazily store the value and then return it.
-     *
-     * @return
-     */
-    public BooleanValue booleanValue() throws IOException, ValidationException {
-        if (this.booleanValue == null) {
-            JsonNode value = Json.MAPPER.readTree("{\"value\":" + this.term + "}").get("value");
-            this.booleanValue = new BooleanValue(value);
-        }
-        return this.booleanValue;
+        return isDate(this.term, format);
     }
 
     /**
      * Check if the term string is a number value.
-     * Lazily store the decision and then return the decision.
-     *
-     * @return
      */
     public boolean isNumber() {
-        if (this.isNumber == null)
-            this.isNumber = isNumber(this.term);
-        return this.isNumber;
+        return isNumber(this.term);
     }
 
     /**
-     * Convert the term to a DateValue.
-     * Lazily store the value and then return it.
-     *
-     * @return
+     * Convert term to a BooleanValue.
      */
-    public DateValue dateValue() throws IOException, ValidationException {
-        if (this.dateValue == null) {
-            JsonNode value = Json.MAPPER.readTree("{\"value\":" + Json.quoteString(this.term) + "}").get("value");
-            this.dateValue = new DateValue(value);
-        }
-        return this.dateValue;
+    public Value booleanValue() throws ValidationException, IOException {
+        Boolean value = Boolean.parseBoolean(this.term.toLowerCase());
+        return new BooleanValue(value);
     }
 
     /**
-     * Convert the term to a NumberValue.
-     * Lazily store the value and then return it.
-     *
-     * @return
+     * Convert term to a DateValue.
      */
-    public NumberValue numberValue() throws IOException, ValidationException {
-        if (this.numberValue == null) {
-            JsonNode value = Json.MAPPER.readTree("{\"value\":" + this.term + "}").get("value");
-            this.numberValue = new NumberValue(value);
-        }
-        return this.numberValue;
+    public Value dateValue() throws ValidationException, IOException {
+        return new DateValue(this.term);
     }
 
     /**
-     * Convert the term to a StringValue.
-     * Lazily store the value and then return it.
-     *
-     * @return
+     * Convert term to a NumberValue.
      */
-    public StringValue stringValue() throws IOException, ValidationException {
-        if (this.stringValue == null) {
-            JsonNode value = Json.MAPPER.readTree("{\"value\":" + Json.quoteString(this.term) + "}").get("value");
-            this.stringValue = new StringValue(value);
+    public Value numberValue() throws ValidationException, IOException {
+        try {
+            if (this.term.contains(".")) {
+                Double value = Double.parseDouble(this.term);
+                return new NumberValue(value);
+            } else {
+                Long value = Long.parseLong(this.term);
+                return new NumberValue(value);
+            }
+        } catch (NumberFormatException e) {
+            throw new ValidationException("Invalid number format: " + this.term);
         }
-        return this.stringValue;
+    }
+
+    /**
+     * Convert term to a StringValue.
+     */
+    public Value stringValue() throws ValidationException, IOException {
+        return new StringValue(this.term);
     }
 
     @Override
@@ -176,8 +138,12 @@ public class Term implements Comparable<Term> {
     }
 
     @Override
-    public boolean equals(Object o) { return this.hashCode() == o.hashCode(); }
+    public boolean equals(Object o) { 
+        return this.hashCode() == o.hashCode(); 
+    }
 
     @Override
-    public int hashCode() { return this.term.hashCode(); }
+    public int hashCode() { 
+        return this.term.hashCode(); 
+    }
 }

@@ -125,87 +125,105 @@ public class TermTest {
 
     ////  Value conversion  ////////////////////////////////////////////////////////////////////////////////////////////
 
+    private Object jsonValue(String json) throws Exception {
+        JsonNode valueNode = Json.MAPPER.readTree(json).get("value");
+        if (valueNode == null || valueNode.isNull()) {
+            return null;
+        } else if (valueNode.isTextual()) {
+            return valueNode.asText();
+        } else if (valueNode.isBoolean()) {
+            return valueNode.asBoolean();
+        } else if (valueNode.isIntegralNumber()) {
+            return valueNode.asLong();
+        } else if (valueNode.isFloatingPointNumber()) {
+            return valueNode.asDouble();
+        } else {
+            // For complex types, convert to string
+            return valueNode.toString();
+        }
+    }
+
     @Test
     public void testValueConversionBooleanFalse() throws Exception {
         Term term = new Term("false");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":false}").get("value");
+        Object value = jsonValue("{\"value\":false}");
         Assert.assertEquals(term.booleanValue(), Value.create("boolean", value));
     }
 
     @Test
     public void testValueConversionBooleanTrue() throws Exception {
         Term term = new Term("true");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":true}").get("value");
+        Object value = jsonValue("{\"value\":true}");
         Assert.assertEquals(term.booleanValue(), Value.create("boolean", value));
     }
 
     @Test
     public void testValueConversionDate() throws Exception {
         Term term = new Term("2019-12-31 12:45:00");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":\"2019-12-31 12:45:00\"}").get("value");
+        Object value = jsonValue("{\"value\":\"2019-12-31 12:45:00\"}");
         Assert.assertEquals(term.dateValue(), Value.create("date", value));
     }
 
     @Test
     public void testValueConversionNumberIntegerLongNegative() throws Exception {
         Term term = new Term("-922337203685477");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":-922337203685477}").get("value");
+        Object value = jsonValue("{\"value\":-922337203685477}");
         Assert.assertEquals(term.numberValue(), Value.create("number", value));
     }
 
     @Test
     public void testValueConversionNumberIntegerLongPositive() throws Exception {
         Term term = new Term("922337203685477");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":922337203685477}").get("value");
+        Object value = jsonValue("{\"value\":922337203685477}");
         Assert.assertEquals(term.numberValue(), Value.create("number", value));
     }
 
     @Test
     public void testValueConversionNumberIntegerShortNegative() throws Exception {
         Term term = new Term("-1");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":-1}").get("value");
+        Object value = jsonValue("{\"value\":-1}");
         Assert.assertEquals(term.numberValue(), Value.create("number", value));
     }
 
     @Test
     public void testValueConversionNumberIntegerShortPositive() throws Exception {
         Term term = new Term("1");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":1}").get("value");
+        Object value = jsonValue("{\"value\":1}");
         Assert.assertEquals(term.numberValue(), Value.create("number", value));
     }
 
     @Test
     public void testValueConversionNumberFloatLongNegative() throws Exception {
         Term term = new Term("-3.141592653589793");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":-3.141592653589793}").get("value");
+        Object value = jsonValue("{\"value\":-3.141592653589793}");
         Assert.assertEquals(term.numberValue(), Value.create("number", value));
     }
 
     @Test
     public void testValueConversionNumberFloatLongPositive() throws Exception {
         Term term = new Term("3.141592653589793");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":3.141592653589793}").get("value");
+        Object value = jsonValue("{\"value\":3.141592653589793}");
         Assert.assertEquals(term.numberValue(), Value.create("number", value));
     }
 
     @Test
     public void testValueConversionNumberFloatShortNegative() throws Exception {
         Term term = new Term("-1.0");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":-1.0}").get("value");
+        Object value = jsonValue("{\"value\":-1.0}");
         Assert.assertEquals(term.numberValue(), Value.create("number", value));
     }
 
     @Test
     public void testValueConversionNumberFloatShortPositive() throws Exception {
         Term term = new Term("1.0");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":1.0}").get("value");
+        Object value = jsonValue("{\"value\":1.0}");
         Assert.assertEquals(term.numberValue(), Value.create("number", value));
     }
 
     @Test
     public void testValueConversionString() throws Exception {
         Term term = new Term("abc");
-        JsonNode value = Json.MAPPER.readTree("{\"value\":\"abc\"}").get("value");
+        Object value = jsonValue("{\"value\":\"abc\"}");
         Assert.assertEquals(term.stringValue(), Value.create("string", value));
     }
 }

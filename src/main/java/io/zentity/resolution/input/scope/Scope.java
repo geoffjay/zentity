@@ -17,8 +17,7 @@
  */
 package io.zentity.resolution.input.scope;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.zentity.common.Json;
+import io.zentity.common.XContentJson;
 import io.zentity.model.Model;
 import io.zentity.model.ValidationException;
 
@@ -42,31 +41,51 @@ public class Scope {
         return this.include;
     }
 
-    public void deserialize(JsonNode json, Model model) throws ValidationException, IOException {
-        if (!json.isNull() && !json.isObject())
-            throw new ValidationException("The 'scope' field of the request body must be an object.");
+    public void deserialize(String json, Model model) throws ValidationException, IOException {
+        try {
+            Map<String, Object> scopeMap = XContentJson.parseToMap(json);
+            deserializeFromMap(scopeMap, model);
+        } catch (IOException e) {
+            throw new ValidationException("Failed to parse scope JSON: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Deserialize scope from a Map representation.
+     * This method provides XContent-based parsing without Jackson dependencies.
+     */
+    @SuppressWarnings("unchecked")
+    public void deserializeFromMap(Map<String, Object> scopeMap, Model model) throws ValidationException, IOException {
+        if (scopeMap == null) {
+            return; // Empty scope is valid
+        }
 
-        // Parse and validate the "scope.exclude" and "scope.include" fields of the request body.
-        Iterator<Map.Entry<String, JsonNode>> fields = json.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> field = fields.next();
-            String name = field.getKey();
+        // Parse and validate the "scope.exclude" and "scope.include" fields
+        for (Map.Entry<String, Object> entry : scopeMap.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            
             switch (name) {
                 case "exclude":
-                    this.exclude.deserialize(json.get("exclude"), model);
+                    if (value instanceof Map) {
+                        Map<String, Object> excludeMap = (Map<String, Object>) value;
+                        this.exclude.deserializeFromMap(excludeMap, model);
+                    } else if (value != null) {
+                        throw new ValidationException("'scope.exclude' must be an object.");
+                    }
                     break;
                 case "include":
-                    this.include.deserialize(json.get("include"), model);
+                    if (value instanceof Map) {
+                        Map<String, Object> includeMap = (Map<String, Object>) value;
+                        this.include.deserializeFromMap(includeMap, model);
+                    } else if (value != null) {
+                        throw new ValidationException("'scope.include' must be an object.");
+                    }
                     break;
                 default:
                     throw new ValidationException("'scope." + name + "' is not a recognized field.");
             }
         }
-
-    }
-
-    public void deserialize(String json, Model model) throws ValidationException, IOException {
-        deserialize(Json.MAPPER.readTree(json), model);
     }
 }
 

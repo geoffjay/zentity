@@ -15,23 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticsearch.plugin.zentity;
+package org.opensearch.plugin.zentity;
 
 import io.zentity.common.AsyncCollectionRunner;
-import io.zentity.common.Json;
+import io.zentity.common.XContentJson;
 import io.zentity.model.Model;
 import io.zentity.model.ValidationException;
 import io.zentity.resolution.Job;
 import io.zentity.resolution.input.Input;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.client.internal.node.NodeClient;
-import org.elasticsearch.core.Tuple;
-import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestResponse;
-import org.elasticsearch.rest.RestStatus;
+import org.opensearch.core.action.ActionListener;
+import org.opensearch.client.node.NodeClient;
+import org.opensearch.rest.BaseRestHandler;
+import org.opensearch.rest.RestRequest;
+import org.opensearch.rest.RestResponse;
+import org.opensearch.core.rest.RestStatus;
+import org.opensearch.rest.BytesRestResponse;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyMap;
-import static org.elasticsearch.rest.RestRequest.Method.POST;
+import static org.opensearch.rest.RestRequest.Method.POST;
 
 public class ResolutionAction extends BaseRestHandler {
 
@@ -91,7 +91,7 @@ public class ResolutionAction extends BaseRestHandler {
     /**
      * Retrieve a serialized entity model.
      *
-     * @param client     The client that will communicate with Elasticsearch.
+     * @param client     The client that will communicate with OpenSearch.
      * @param entityType The entity type.
      * @param onComplete The action to perform after retrieving the entity model.
      */
@@ -106,11 +106,23 @@ public class ResolutionAction extends BaseRestHandler {
                 onComplete::onFailure
         ));
     }
+    
+    static void getModelMap(NodeClient client, String entityType, ActionListener<Map<String, Object>> onComplete) {
+        ModelsAction.getEntityModel(entityType, client, ActionListener.wrap(
+                (res) -> {
+                    if (!res.isExists())
+                        throw new NotFoundException("Entity type '" + entityType + "' not found.");
+                    Map<String, Object> modelMap = res.getSourceAsMap();
+                    onComplete.onResponse(modelMap);
+                },
+                onComplete::onFailure
+        ));
+    }
 
     /**
      * Construct and return a Job object.
      *
-     * @param client    The client that will communicate with Elasticsearch.
+     * @param client    The client that will communicate with OpenSearch.
      * @param input     The input for the resolution job.
      * @param params    The parameters of the job.
      * @param reqParams The parameters of the request.
@@ -186,8 +198,14 @@ public class ResolutionAction extends BaseRestHandler {
         } else {
 
             // If an entity type is given, retrieve the entity model.
-            getModelString(client, entityType, ActionListener.wrap(
-                    (modelString) -> buildJob(client, new Model(modelString, true), body, params, reqParams, onComplete),
+            getModelMap(client, entityType, ActionListener.wrap(
+                    (modelMap) -> {
+                        try {
+                            buildJob(client, new Model(modelMap, true), body, params, reqParams, onComplete);
+                        } catch (Exception e) {
+                            onComplete.onFailure(e);
+                        }
+                    },
                     onComplete::onFailure
             ));
         }
@@ -196,44 +214,56 @@ public class ResolutionAction extends BaseRestHandler {
     static void buildJob(NodeClient client, Model model, String body, Map<String, String> params, Map<String, String> reqParams, ActionListener<Job> onComplete) throws IOException, ValidationException {
         if (body == null || body.equals(""))
             throw new BadRequestException("Request body is missing.");
-        Input input = new Input(body, model);
-        buildJob(client, input, body, params, reqParams, onComplete);
+        
+        // Use XContent-based Input parsing instead of Jackson
+        try {
+            Input input = new Input(body, model);
+            Job job = buildJob(client, input, params, reqParams);
+            onComplete.onResponse(job);
+        } catch (Exception e) {
+            onComplete.onFailure(e);
+        }
     }
 
     static void buildJob(NodeClient client, Input input, String body, Map<String, String> params, Map<String, String> reqParams, ActionListener<Job> onComplete) {
-        if (body == null || body.equals(""))
-            throw new BadRequestException("Request body is missing.");
-        Job job = buildJob(client, input, params, reqParams);
-        onComplete.onResponse(job);
+        try {
+            Job job = buildJob(client, input, params, reqParams);
+            onComplete.onResponse(job);
+        } catch (Exception e) {
+            onComplete.onFailure(e);
+        }
     }
 
-    /**
-     * Execute Job.run()
-     *
-     * @param job        The job to run.
-     * @param onComplete The action to perform after the job completes.
-     */
     static void runJob(Job job, ActionListener<BulkAction.SingleResult> onComplete) {
-        job.run(onComplete.delegateFailure(
-            (ignored, res) -> {
-                BulkAction.SingleResult jobResult = new BulkAction.SingleResult(res, job.failed());
-                onComplete.onResponse(jobResult);
-            }
-        ));
+        try {
+            job.run(ActionListener.wrap(
+                    (jobResponse) -> {
+                        try {
+                            onComplete.onResponse(new BulkAction.SingleResult(job.response(), false));
+                        } catch (Exception e) {
+                            onComplete.onFailure(e);
+                        }
+                    },
+                    onComplete::onFailure
+            ));
+        } catch (Exception e) {
+            onComplete.onFailure(e);
+        }
     }
 
     /**
-     * Construct a Job object, and then execute Job.run().
+     * Build and run a resolution job.
      *
-     * @param client     The client that will communicate with Elasticsearch.
+     * @param client     The client that will communicate with OpenSearch.
      * @param body       The request body.
      * @param params     The job params.
      * @param reqParams  The request params.
      * @param onComplete The action to perform after the job completes.
      */
     static void buildAndRunJob(NodeClient client, String body, Map<String, String> params, Map<String, String> reqParams, ActionListener<BulkAction.SingleResult> onComplete) {
-        buildJob(client, body, params, reqParams, onComplete.delegateFailure(
-            (ignored, job) -> runJob(job, onComplete)
+        buildJob(client, body, params, reqParams, ActionListener.wrap(
+            (job) -> runJob(job, onComplete),
+            onComplete::onFailure
         ));
     }
 
@@ -255,13 +285,13 @@ public class ResolutionAction extends BaseRestHandler {
      * Run a collection of resolution jobs concurrently.
      *
      * @param client      The node client.
-     * @param modelString The serialized entity model (null is acceptable).
+     * @param modelMap    The entity model as a Map (null is acceptable).
      *                    Deserialized by each job to avoid mutating the model shared between jobs.
      * @param entries     The bulk tuple entries.
      * @param reqParams   The parameters map for the entire request.
      * @param listener    The listener for completion results.
      */
-    static void executeBulk(NodeClient client, String modelString, List<Tuple<String, String>> entries, Map<String, String> reqParams, ActionListener<Collection<BulkAction.SingleResult>> listener) {
+    static void executeBulk(NodeClient client, Map<String, Object> modelMap, List<Tuple<String, String>> entries, Map<String, String> reqParams, ActionListener<Collection<BulkAction.SingleResult>> listener) {
         BiConsumer<Tuple<String, String>, ActionListener<BulkAction.SingleResult>> jobRunner = (tuple, delegate) -> {
             ActionListener<Job> onJobBuilt = ActionListener.wrap(
                     (job) -> runJob(job, delegate),
@@ -272,7 +302,7 @@ public class ResolutionAction extends BaseRestHandler {
             String body = tuple.v2();
             Map<String, String> params;
             try {
-                params = Json.toStringMap(tuple.v1());
+                params = XContentJson.toStringMap(tuple.v1());
             } catch (Exception e) {
                 delegateJobFailure(delegate, client, e);
                 return;
@@ -280,7 +310,7 @@ public class ResolutionAction extends BaseRestHandler {
 
             // Handle job building errors, but not job running as those should be considered fatal
             try {
-                if (modelString == null) {
+                if (modelMap == null) {
                     // This request did not have an entity model in the URL. Retrieve the entity model for this job.
                     buildJob(client, body, params, reqParams, onJobBuilt);
                 } else if (params.get(PARAM_ENTITY_TYPE) != null && !java.util.Objects.equals(params.get(PARAM_ENTITY_TYPE), reqParams.get(PARAM_ENTITY_TYPE))) {
@@ -288,7 +318,11 @@ public class ResolutionAction extends BaseRestHandler {
                     buildJob(client, body, params, reqParams, onJobBuilt);
                 } else {
                     // This job uses the entity model from the URL.
-                    buildJob(client, new Model(modelString, false), body, params, reqParams, onJobBuilt);
+                    try {
+                        buildJob(client, new Model(modelMap, false), body, params, reqParams, onJobBuilt);
+                    } catch (Exception e) {
+                        onJobBuilt.onFailure(e);
+                    }
                 }
             } catch (Exception e) {
                 delegateJobFailure(delegate, client, e);
@@ -317,13 +351,14 @@ public class ResolutionAction extends BaseRestHandler {
     static void runBulk(NodeClient client, List<Tuple<String, String>> entries, Map<String, String> reqParams, ActionListener<BulkAction.BulkResult> onComplete) {
         final long startTime = System.nanoTime();
 
-        ActionListener<Collection<BulkAction.SingleResult>> delegate = onComplete.delegateFailure(
-                (ignored, results) -> {
+        ActionListener<Collection<BulkAction.SingleResult>> delegate = ActionListener.wrap(
+                (results) -> {
                     List<String> items = results.stream().map((res) -> res.response).collect(Collectors.toList());
                     boolean errors = results.stream().anyMatch((res) -> res.failed);
                     long took = Duration.ofNanos(System.nanoTime() - startTime).toMillis();
                     onComplete.onResponse(new BulkAction.BulkResult(items, errors, took));
-                }
+                },
+                onComplete::onFailure
         );
 
         String entityType = ParamsUtil.optString(PARAM_ENTITY_TYPE, null, emptyMap(), reqParams);
@@ -337,8 +372,8 @@ public class ResolutionAction extends BaseRestHandler {
             // An entity type was given in the URL.
             // One entity model will be used for all jobs (unless overridden by any jobs).
             // Retrieve the entity model once before running any jobs.
-            getModelString(client, entityType, ActionListener.wrap(
-                    (modelString) -> executeBulk(client, modelString, entries, reqParams, delegate),
+            getModelMap(client, entityType, ActionListener.wrap(
+                    (modelMap) -> executeBulk(client, modelMap, entries, reqParams, delegate),
                     onComplete::onFailure
             ));
         }
@@ -385,7 +420,7 @@ public class ResolutionAction extends BaseRestHandler {
         final boolean pretty = ParamsUtil.optBoolean(PARAM_PRETTY, Job.DEFAULT_PRETTY, reqParams, emptyMap());
 
         return channel -> {
-            Consumer<Exception> errorHandler = (e) -> ZentityPlugin.sendResponseError(channel, logger, e);
+            Consumer<Exception> errorHandler = (e) -> ZentityPluginMinimal.sendResponseError(channel, logger, e);
             try {
                 boolean isBulkRequest = restRequest.path().endsWith("/_bulk");
                 if (isBulkRequest) {
@@ -396,8 +431,8 @@ public class ResolutionAction extends BaseRestHandler {
                         (bulkResult) -> {
                             String json = BulkAction.bulkResultToJson(bulkResult);
                             if (pretty)
-                                json = Json.pretty(json);
-                            channel.sendResponse(new RestResponse(RestStatus.OK, "application/json", json));
+                                json = XContentJson.pretty(json);
+                            channel.sendResponse(new BytesRestResponse(RestStatus.OK, "application/json", json));
                         },
                         errorHandler
                     ));
@@ -408,9 +443,9 @@ public class ResolutionAction extends BaseRestHandler {
                     buildAndRunJob(client, body, reqParams, emptyMap(), ActionListener.wrap(
                         (jobResult) -> {
                             if (jobResult.failed)
-                                channel.sendResponse(new RestResponse(RestStatus.INTERNAL_SERVER_ERROR, "application/json", jobResult.response));
+                                channel.sendResponse(new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, "application/json", jobResult.response));
                             else
-                                channel.sendResponse(new RestResponse(RestStatus.OK, "application/json", jobResult.response));
+                                channel.sendResponse(new BytesRestResponse(RestStatus.OK, "application/json", jobResult.response));
                         },
                         errorHandler
                     ));

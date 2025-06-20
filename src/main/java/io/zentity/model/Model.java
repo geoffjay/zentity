@@ -20,9 +20,14 @@ package io.zentity.model;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.common.Json;
+import org.opensearch.core.xcontent.XContentParser;
+import org.opensearch.common.xcontent.XContentType;
+import org.opensearch.core.xcontent.DeprecationHandler;
+import org.opensearch.core.xcontent.NamedXContentRegistry;
 import io.zentity.common.Patterns;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.common.Strings;
+import org.opensearch.OpenSearchException;
+import org.opensearch.plugin.zentity.StringsUtil;
+import org.opensearch.common.xcontent.json.JsonXContent;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -66,6 +71,15 @@ public class Model {
         this.validateRunnable = validateRunnable;
         this.deserialize(json);
     }
+    
+    /**
+     * Constructor that creates a Model from a Map (from OpenSearch GetResponse.getSourceAsMap()).
+     * This is a temporary workaround to avoid Jackson classloader issues during OpenSearch migration.
+     */
+    public Model(Map<String, Object> modelMap, boolean validateRunnable) throws ValidationException {
+        this.validateRunnable = validateRunnable;
+        this.deserializeFromMap(modelMap);
+    }
 
     public Map<String, Attribute> attributes() {
         return this.attributes;
@@ -100,12 +114,12 @@ public class Model {
             throw new ValidationException(msg.apply("", "must not be empty"));
         if (Patterns.EMPTY_STRING.matcher(name).matches())
             throw new ValidationException(msg.apply(name, "must not be empty"));
-        if (!Strings.validFileName(name))
-            throw new ValidationException(msg.apply(name, "must not contain the following characters: " + Strings.INVALID_FILENAME_CHARS));
         if (name.contains("#"))
             throw new ValidationException(msg.apply(name, "must not contain '#'"));
         if (name.contains(":"))
             throw new ValidationException(msg.apply(name, "must not contain ':'"));
+        if (!StringsUtil.validFileName(name))
+            throw new ValidationException(msg.apply(name, "must not contain the following characters: " + StringsUtil.INVALID_FILENAME_CHARS));
         if (name.charAt(0) == '_' || name.charAt(0) == '-' || name.charAt(0) == '+')
             throw new ValidationException(msg.apply(name, "must not start with '_', '-', or '+'"));
         int byteCount = 0;
@@ -113,7 +127,7 @@ public class Model {
             byteCount = name.getBytes("UTF-8").length;
         } catch (UnsupportedEncodingException e) {
             // UTF-8 should always be supported, but rethrow this if it is not for some reason
-            throw new ElasticsearchException("Unable to determine length of name [" + name + "]", e);
+            throw new OpenSearchException("Unable to determine length of name [" + name + "]", e);
         }
         if (byteCount > MAX_STRICT_NAME_BYTES)
             throw new ValidationException(msg.apply(name, "name is too long, (" + byteCount + " > " + MAX_STRICT_NAME_BYTES + ")"));
@@ -237,7 +251,202 @@ public class Model {
     }
 
     public void deserialize(String json) throws ValidationException, IOException {
-        deserialize(Json.MAPPER.readTree(json));
+        if (json == null || json.trim().isEmpty()) {
+            throw new ValidationException("Entity model JSON cannot be null or empty.");
+        }
+        
+        try {
+            // Use OpenSearch XContent parser instead of Jackson
+            XContentParser parser = JsonXContent.jsonXContent.createParser(
+                NamedXContentRegistry.EMPTY,
+                DeprecationHandler.THROW_UNSUPPORTED_OPERATION,
+                json
+            );
+            
+            // Parse the JSON into a Map
+            Map<String, Object> modelMap = parser.map();
+            parser.close();
+            
+            // Use the existing Map-based deserialization
+            this.deserializeFromMap(modelMap);
+            
+        } catch (IOException e) {
+            throw new ValidationException("Failed to parse entity model JSON: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Deserialize model from a Map (temporary workaround for OpenSearch migration).
+     * This method provides basic validation without full JsonNode processing.
+     */
+    @SuppressWarnings("unchecked")
+    private void deserializeFromMap(Map<String, Object> modelMap) throws ValidationException {
+        if (modelMap == null) {
+            throw new ValidationException("Entity model cannot be null.");
+        }
+
+        // Validate the existence of required fields.
+        for (String field : REQUIRED_FIELDS) {
+            if (!modelMap.containsKey(field)) {
+                throw new ValidationException("Entity model is missing required field '" + field + "'.");
+            }
+        }
+
+        // Check for unexpected fields
+        for (String fieldName : modelMap.keySet()) {
+            if (!REQUIRED_FIELDS.contains(fieldName)) {
+                throw new ValidationException("'" + fieldName + "' is not a recognized field.");
+            }
+        }
+
+        // Basic validation and parsing of each required field
+        for (String fieldName : REQUIRED_FIELDS) {
+            Object fieldValue = modelMap.get(fieldName);
+            if (!(fieldValue instanceof Map)) {
+                throw new ValidationException("'" + fieldName + "' must be an object.");
+            }
+            
+            Map<String, Object> fieldMap = (Map<String, Object>) fieldValue;
+            if (this.validateRunnable && fieldMap.isEmpty()) {
+                throw new ValidationException("'" + fieldName + "' must not be empty in the entity model.");
+            }
+            
+            // Parse field data with simplified implementations
+            switch (fieldName) {
+                case "attributes":
+                    parseAttributesFromMap(fieldMap);
+                    break;
+                case "indices":
+                    parseIndicesFromMap(fieldMap);
+                    break;
+                case "matchers":
+                    parseMatchersFromMap(fieldMap);
+                    break;
+                case "resolvers":
+                    parseResolversFromMap(fieldMap);
+                    break;
+                default:
+                    throw new ValidationException("'" + fieldName + "' is not a recognized field.");
+            }
+        }
+        
+        // Validate attribute nesting
+        this.validateAttributeNesting();
+    }
+    
+    /**
+     * Parse attributes from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private void parseAttributesFromMap(Map<String, Object> attributesMap) throws ValidationException {
+        for (Map.Entry<String, Object> entry : attributesMap.entrySet()) {
+            String attributeName = entry.getKey();
+            Object attributeValue = entry.getValue();
+            
+            if (!(attributeValue instanceof Map)) {
+                throw new ValidationException("'attributes." + attributeName + "' must be an object.");
+            }
+            
+            Map<String, Object> attributeMap = (Map<String, Object>) attributeValue;
+            
+            // Extract type
+            String type = "string"; // Default type
+            if (attributeMap.containsKey("type")) {
+                Object typeValue = attributeMap.get("type");
+                if (typeValue instanceof String) {
+                    type = (String) typeValue;
+                }
+            }
+            
+            // Extract score if present
+            Double score = null;
+            if (attributeMap.containsKey("score")) {
+                Object scoreValue = attributeMap.get("score");
+                if (scoreValue instanceof Number) {
+                    score = ((Number) scoreValue).doubleValue();
+                }
+            }
+            
+            // Extract params if present
+            Map<String, String> params = null;
+            if (attributeMap.containsKey("params")) {
+                Object paramsValue = attributeMap.get("params");
+                if (paramsValue instanceof Map) {
+                    params = new TreeMap<>();
+                    Map<String, Object> paramsMap = (Map<String, Object>) paramsValue;
+                    for (Map.Entry<String, Object> paramEntry : paramsMap.entrySet()) {
+                        String paramKey = paramEntry.getKey();
+                        Object paramValue = paramEntry.getValue();
+                        if (paramValue == null) {
+                            params.put(paramKey, "null");
+                        } else {
+                            params.put(paramKey, paramValue.toString());
+                        }
+                    }
+                }
+            }
+            
+            // Use the new constructor that avoids Jackson entirely
+            Attribute attribute = new Attribute(attributeName, type, score, params, this.validateRunnable);
+            this.attributes.put(attributeName, attribute);
+        }
+    }
+    
+    /**
+     * Parse indices from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private void parseIndicesFromMap(Map<String, Object> indicesMap) throws ValidationException {
+        for (Map.Entry<String, Object> entry : indicesMap.entrySet()) {
+            String indexName = entry.getKey();
+            Object indexValue = entry.getValue();
+            
+            if (!(indexValue instanceof Map)) {
+                throw new ValidationException("'indices." + indexName + "' must be an object.");
+            }
+            
+            Map<String, Object> indexMap = (Map<String, Object>) indexValue;
+            Index index = new Index(indexName, indexMap, this.validateRunnable);
+            this.indices.put(indexName, index);
+        }
+    }
+    
+    /**
+     * Parse matchers from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private void parseMatchersFromMap(Map<String, Object> matchersMap) throws ValidationException {
+        for (Map.Entry<String, Object> entry : matchersMap.entrySet()) {
+            String matcherName = entry.getKey();
+            Object matcherValue = entry.getValue();
+            
+            if (!(matcherValue instanceof Map)) {
+                throw new ValidationException("'matchers." + matcherName + "' must be an object.");
+            }
+            
+            Map<String, Object> matcherMap = (Map<String, Object>) matcherValue;
+            Matcher matcher = new Matcher(matcherName, matcherMap, this.validateRunnable);
+            this.matchers.put(matcherName, matcher);
+        }
+    }
+    
+    /**
+     * Parse resolvers from Map representation.
+     */
+    @SuppressWarnings("unchecked")
+    private void parseResolversFromMap(Map<String, Object> resolversMap) throws ValidationException {
+        for (Map.Entry<String, Object> entry : resolversMap.entrySet()) {
+            String resolverName = entry.getKey();
+            Object resolverValue = entry.getValue();
+            
+            if (!(resolverValue instanceof Map)) {
+                throw new ValidationException("'resolvers." + resolverName + "' must be an object.");
+            }
+            
+            Map<String, Object> resolverMap = (Map<String, Object>) resolverValue;
+            Resolver resolver = new Resolver(resolverName, resolverMap, this.validateRunnable);
+            this.resolvers.put(resolverName, resolver);
+        }
     }
 
 }

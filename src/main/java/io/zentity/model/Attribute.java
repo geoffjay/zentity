@@ -19,6 +19,8 @@ package io.zentity.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.json.JsonXContent;
 import io.zentity.common.Json;
 import io.zentity.common.Patterns;
 
@@ -50,11 +52,15 @@ public class Attribute {
         this.deserialize(json);
     }
 
-    public Attribute(String name, String json) throws ValidationException, IOException {
+    public Attribute(String name, String json) throws ValidationException {
         validateName(name);
         this.name = name;
         this.nameFields = this.parseNameFields(name);
-        this.deserialize(json);
+        try {
+            this.deserialize(json);
+        } catch (ValidationException e) {
+            throw e;
+        }
     }
 
     public Attribute(String name, JsonNode json, boolean validateRunnable) throws ValidationException, JsonProcessingException {
@@ -65,12 +71,48 @@ public class Attribute {
         this.deserialize(json);
     }
 
-    public Attribute(String name, String json, boolean validateRunnable) throws ValidationException, IOException {
+    public Attribute(String name, String json, boolean validateRunnable) throws ValidationException {
         validateName(name);
         this.name = name;
         this.nameFields = this.parseNameFields(name);
         this.validateRunnable = validateRunnable;
-        this.deserialize(json);
+        try {
+            this.deserialize(json);
+        } catch (ValidationException e) {
+            throw e;
+        }
+    }
+
+    /**
+     * Constructor for creating Attribute directly from parsed values without JSON.
+     * This avoids Jackson dependencies entirely.
+     */
+    public Attribute(String name, String type, Double score, Map<String, String> params, boolean validateRunnable) throws ValidationException {
+        validateName(name);
+        this.name = name;
+        this.nameFields = this.parseNameFields(name);
+        this.validateRunnable = validateRunnable;
+        
+        // Set type with validation
+        if (type != null) {
+            if (!VALID_TYPES.contains(type)) {
+                throw new ValidationException("'attributes." + this.name + ".type' has an unrecognized type '" + type + "'.");
+            }
+            this.type = type;
+        }
+        
+        // Set score with validation
+        if (score != null) {
+            if (score < 0.0 || score > 1.0) {
+                throw new ValidationException("'attributes." + this.name + ".score' must be a floating point number in the range of 0.0 - 1.0. Integer values of 0 or 1 are acceptable.");
+            }
+            this.score = score;
+        }
+        
+        // Set params
+        if (params != null) {
+            this.params.putAll(params);
+        }
     }
 
     public String name() {
@@ -206,8 +248,13 @@ public class Attribute {
                         Map.Entry<String, JsonNode> paramNode = paramsNode.next();
                         String paramField = paramNode.getKey();
                         JsonNode paramValue = paramNode.getValue();
-                        if (paramValue.isObject() || paramValue.isArray())
-                            this.params().put(paramField, Json.MAPPER.writeValueAsString(paramValue));
+                        if (paramValue.isObject() || paramValue.isArray()) {
+                            try {
+                                this.params().put(paramField, Json.MAPPER.writeValueAsString(paramValue));
+                            } catch (IOException e) {
+                                this.params().put(paramField, paramValue.toString());
+                            }
+                        }
                         else if (paramValue.isNull())
                             this.params().put(paramField, "null");
                         else
@@ -223,8 +270,96 @@ public class Attribute {
         }
     }
 
-    public void deserialize(String json) throws ValidationException, IOException {
-        deserialize(Json.MAPPER.readTree(json));
+    public void deserialize(String json) throws ValidationException {
+        if (json == null || json.trim().isEmpty()) {
+            throw new ValidationException("JSON cannot be null or empty");
+        }
+        
+        try {
+            // Parse JSON using Jackson and delegate to JsonNode-based method
+            JsonNode jsonNode = Json.MAPPER.readTree(json);
+            this.deserialize(jsonNode);
+        } catch (IOException e) {
+            throw new ValidationException("Invalid JSON format: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Deserialize from a Map representation (XContent migration).
+     * 
+     * @param map The attribute map from XContent parsing.
+     * @throws ValidationException If validation fails.
+     */
+    @SuppressWarnings("unchecked")
+    public void deserialize(Map<String, Object> map) throws ValidationException {
+        if (map == null) {
+            throw new ValidationException("'attributes." + this.name + "' must be an object.");
+        }
+
+        // Process each field in the map
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            
+            switch (name) {
+                case "type":
+                    if (!(value instanceof String)) {
+                        throw new ValidationException("'attributes." + this.name + ".type' must be a string.");
+                    }
+                    String typeValue = (String) value;
+                    if (typeValue.isEmpty()) {
+                        throw new ValidationException("'attributes." + this.name + ".type' must not be empty.");
+                    }
+                    if (!VALID_TYPES.contains(typeValue)) {
+                        throw new ValidationException("'attributes." + this.name + ".type' has an unrecognized type '" + typeValue + "'.");
+                    }
+                    this.type = typeValue;
+                    break;
+                    
+                case "params":
+                    if (!(value instanceof Map)) {
+                        throw new ValidationException("'attributes." + this.name + ".params' must be an object.");
+                    }
+                    Map<String, Object> paramsMap = (Map<String, Object>) value;
+                    for (Map.Entry<String, Object> paramEntry : paramsMap.entrySet()) {
+                        String paramField = paramEntry.getKey();
+                        Object paramValue = paramEntry.getValue();
+                        
+                        if (paramValue == null) {
+                            this.params().put(paramField, "null");
+                        } else if (paramValue instanceof Map || paramValue instanceof Iterable) {
+                            // Convert complex objects to JSON string
+                            try (XContentBuilder builder = JsonXContent.contentBuilder()) {
+                                builder.value(paramValue);
+                                this.params().put(paramField, builder.toString());
+                            } catch (IOException e) {
+                                this.params().put(paramField, paramValue.toString());
+                            }
+                        } else {
+                            this.params().put(paramField, paramValue.toString());
+                        }
+                    }
+                    break;
+                    
+                case "score":
+                    if (value != null) {
+                        Double scoreValue;
+                        if (value instanceof Number) {
+                            scoreValue = ((Number) value).doubleValue();
+                        } else {
+                            throw new ValidationException("'attributes." + this.name + ".score' must be a floating point number in the range of 0.0 - 1.0. Integer values of 0 or 1 are acceptable.");
+                        }
+                        if (scoreValue < 0.0 || scoreValue > 1.0) {
+                            throw new ValidationException("'attributes." + this.name + ".score' must be a floating point number in the range of 0.0 - 1.0. Integer values of 0 or 1 are acceptable.");
+                        }
+                        this.score = scoreValue;
+                    }
+                    break;
+                    
+                default:
+                    throw new ValidationException("'attributes." + this.name + "." + name + "' is not a recognized field.");
+            }
+        }
     }
 
 }

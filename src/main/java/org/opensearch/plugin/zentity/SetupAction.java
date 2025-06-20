@@ -15,31 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticsearch.plugin.zentity;
+package org.opensearch.plugin.zentity;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.ElasticsearchSecurityException;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.client.internal.node.NodeClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.xcontent.XContentBuilder;
-import org.elasticsearch.xcontent.XContentFactory;
-import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestRequest;
-import org.elasticsearch.rest.RestResponse;
-import org.elasticsearch.rest.RestStatus;
+import org.opensearch.OpenSearchSecurityException;
+import org.opensearch.core.action.ActionListener;
+import org.opensearch.action.admin.indices.create.CreateIndexResponse;
+import org.opensearch.client.node.NodeClient;
+import org.opensearch.common.settings.Settings;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.common.xcontent.XContentFactory;
+import org.opensearch.rest.BaseRestHandler;
+import org.opensearch.rest.RestRequest;
+import org.opensearch.rest.RestResponse;
+import org.opensearch.core.rest.RestStatus;
+import org.opensearch.rest.BytesRestResponse;
 
 import java.util.List;
 
-import static org.elasticsearch.rest.RestRequest.Method;
-import static org.elasticsearch.rest.RestRequest.Method.POST;
+import static org.opensearch.rest.RestRequest.Method;
+import static org.opensearch.rest.RestRequest.Method.POST;
 
 public class SetupAction extends BaseRestHandler {
 
     private static final Logger logger = LogManager.getLogger(SetupAction.class);
-
+    
+    public static final String INDEX_NAME = ".zentity-models";
     public static final int DEFAULT_NUMBER_OF_SHARDS = 1;
     public static final int DEFAULT_NUMBER_OF_REPLICAS = 1;
     public static final String INDEX_MAPPING = "{\n" +
@@ -80,7 +82,7 @@ public class SetupAction extends BaseRestHandler {
      * @param onComplete       Action to perform after index creation request completes.
      */
     public static void createIndex(NodeClient client, int numberOfShards, int numberOfReplicas, ActionListener<CreateIndexResponse> onComplete) {
-        client.admin().indices().prepareCreate(ModelsAction.INDEX_NAME)
+        client.admin().indices().prepareCreate(INDEX_NAME)
             .setSettings(Settings.builder()
                     .put("index.hidden", true)
                     .put("index.number_of_shards", numberOfShards)
@@ -128,11 +130,11 @@ public class SetupAction extends BaseRestHandler {
                                 if (pretty)
                                     content.prettyPrint();
                                 content.startObject().field("acknowledged", true).endObject();
-                                channel.sendResponse(new RestResponse(RestStatus.OK, content));
+                                channel.sendResponse(new BytesRestResponse(RestStatus.OK, content));
                             } catch (Exception e) {
 
                                 // An error occurred when sending the response.
-                                ZentityPlugin.sendResponseError(channel, logger, e);
+                                ZentityPluginMinimal.sendResponseError(channel, logger, e);
                             }
                         }
 
@@ -140,18 +142,18 @@ public class SetupAction extends BaseRestHandler {
                         public void onFailure(Exception e) {
 
                             // An error occurred when creating the .zentity-models index.
-                            if (e.getClass() == ElasticsearchSecurityException.class) {
+                            if (e.getClass() == OpenSearchSecurityException.class) {
 
                                 // The error was a security exception.
                                 // Log the error message as it was received from Elasticsearch.
                                 logger.debug(e.getMessage());
 
                                 // Return a more descriptive error message for the user.
-                                ZentityPlugin.sendResponseError(channel, logger, new ForbiddenException("The '" + ModelsAction.INDEX_NAME + "' index cannot be created. This action requires the 'create_index' privilege for the '" + ModelsAction.INDEX_NAME + "' index. Your role does not have this privilege."));
+                                ZentityPluginMinimal.sendResponseError(channel, logger, new ForbiddenException("The '" + INDEX_NAME + "' index cannot be created. This action requires the 'create_index' privilege for the '" + INDEX_NAME + "' index. Your role does not have this privilege."));
                             } else {
 
                                 // The error was unexpected.
-                                ZentityPlugin.sendResponseError(channel, logger, e);
+                                ZentityPluginMinimal.sendResponseError(channel, logger, e);
                             }
                         }
                     });
@@ -160,7 +162,7 @@ public class SetupAction extends BaseRestHandler {
                     throw new NotImplementedException("Method and endpoint not implemented.");
                 }
             } catch (NotImplementedException e) {
-                channel.sendResponse(new RestResponse(channel, RestStatus.NOT_IMPLEMENTED, e));
+                channel.sendResponse(new BytesRestResponse(RestStatus.NOT_IMPLEMENTED, e.getMessage()));
             }
         };
     }

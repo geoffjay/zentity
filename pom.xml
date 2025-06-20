@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <name>zentity</name>
-    <description>Entity resolution for Elasticsearch.</description>
+    <description>Entity resolution for OpenSearch.</description>
     <groupId>io.zentity</groupId>
     <artifactId>zentity</artifactId>
-    <version>${zentity.version}-elasticsearch-${elasticsearch.version}</version>
+    <version>${zentity.version}-opensearch-${opensearch.version}</version>
     <url>https://zentity.io</url>
     <inceptionYear>2018</inceptionYear>
 
@@ -16,14 +16,15 @@
 
         <!-- zentity properties -->
         <zentity.author>Dave Moore</zentity.author>
-        <zentity.classname>org.elasticsearch.plugin.zentity.ZentityPlugin</zentity.classname>
+        <zentity.classname>org.opensearch.plugin.zentity.ZentityPluginMinimal</zentity.classname>
         <zentity.website>${project.url}</zentity.website>
         <zentity.version>1.8.3</zentity.version>
 
         <!-- Dependency versions -->
-        <elasticsearch.version>8.17.0</elasticsearch.version>
-        <jackson.core.version>2.17.0</jackson.core.version>
-        <jackson.databind.version>2.17.0</jackson.databind.version>
+        <opensearch.version>2.17.0</opensearch.version>
+        <jackson.core.version>2.17.2</jackson.core.version>
+        <jackson.databind.version>2.17.2</jackson.databind.version>
+        <jackson.annotations.version>2.17.2</jackson.annotations.version>
         <jdk.version>1.17</jdk.version>
         <commons-io.version>2.16.1</commons-io.version>
         <testcontainers.version>1.16.0</testcontainers.version>
@@ -48,29 +49,41 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-            <scope>provided</scope><!-- Provided by Elasticsearch -->
+            <groupId>org.opensearch</groupId>
+            <artifactId>opensearch</artifactId>
+            <version>${opensearch.version}</version>
+            <scope>provided</scope><!-- Provided by OpenSearch -->
+        </dependency>
+        <dependency>
+            <groupId>org.opensearch</groupId>
+            <artifactId>opensearch-x-content</artifactId>
+            <version>${opensearch.version}</version>
+            <scope>provided</scope><!-- Provided by OpenSearch -->
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.core.version}</version>
-            <scope>provided</scope><!-- Provided by Elasticsearch -->
+            <version>2.17.2</version>
+            <scope>compile</scope><!-- OpenSearch only provides jackson-core, not databind/annotations -->
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.databind.version}</version>
-            <scope>compile</scope>
+            <version>2.17.2</version>
+            <scope>compile</scope><!-- Not provided by OpenSearch -->
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.17.2</version>
+            <scope>compile</scope><!-- Not provided by OpenSearch -->
         </dependency>
 
         <!-- Test infrastructure -->
         <dependency>
-            <groupId>co.elastic.clients</groupId>
-            <artifactId>elasticsearch-java</artifactId>
-            <version>${elasticsearch.version}</version>
+            <groupId>org.opensearch.client</groupId>
+            <artifactId>opensearch-java</artifactId>
+            <version>${opensearch.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -96,6 +109,18 @@
                 <configuration>
                     <source>9</source>
                     <target>9</target>
+                    <!-- Exclude Elasticsearch plugin files during OpenSearch migration -->
+                    <excludes>
+                        <exclude>**/org/elasticsearch/plugin/zentity/**</exclude>
+                        <!-- Include HomeAction for basic endpoint testing -->
+                        <exclude>**/org/opensearch/plugin/zentity/ZentityPlugin.java</exclude>
+                        <!-- HomeAction.java is now included for basic endpoint testing -->
+                        <exclude>**/org/opensearch/plugin/zentity/ModelsAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/BulkAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/SetupAction.java</exclude>
+                        <exclude>**/org/opensearch/plugin/zentity/ResolutionAction.java</exclude>
+                        <!-- ZentityPluginMinimal and HomeAction are included for basic testing -->
+                    </excludes>
                 </configuration>
             </plugin>
 
@@ -234,7 +259,7 @@
                 <configuration>
                     <environmentVariables>
                         <BUILD_DIRECTORY>${project.build.directory}</BUILD_DIRECTORY>
-                        <ELASTICSEARCH_VERSION>${elasticsearch.version}</ELASTICSEARCH_VERSION>
+                        <ELASTICSEARCH_VERSION>${opensearch.version}</ELASTICSEARCH_VERSION>
                         <ZENTITY_VERSION>${zentity.version}</ZENTITY_VERSION>
                     </environmentVariables>
                     <assertions enableSystemAssertions="false">

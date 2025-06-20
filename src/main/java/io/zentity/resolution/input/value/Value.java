@@ -17,13 +17,12 @@
  */
 package io.zentity.resolution.input.value;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.model.ValidationException;
 
 public abstract class Value implements ValueInterface {
 
     protected final String type = "value";
-    protected final JsonNode value;
+    protected final Object value;
     protected final String serialized;
 
     /**
@@ -31,9 +30,9 @@ public abstract class Value implements ValueInterface {
      *
      * @param value Attribute value.
      */
-    Value(JsonNode value) throws ValidationException {
+    Value(Object value) throws ValidationException {
         this.validate(value);
-        this.value = value.isNull() ? null : value;
+        this.value = value;
         this.serialized = this.serialize(value);
     }
 
@@ -45,7 +44,7 @@ public abstract class Value implements ValueInterface {
      * @return
      * @throws ValidationException
      */
-    public static Value create(String attributeType, JsonNode value) throws ValidationException {
+    public static Value create(String attributeType, Object value) throws ValidationException {
         switch (attributeType) {
             case "boolean":
                 return new BooleanValue(value);
@@ -61,10 +60,10 @@ public abstract class Value implements ValueInterface {
     }
 
     @Override
-    public abstract String serialize(JsonNode value);
+    public abstract String serialize(Object value);
 
     @Override
-    public abstract void validate(JsonNode value) throws ValidationException;
+    public abstract void validate(Object value) throws ValidationException;
 
     @Override
     public Object type() {
@@ -72,7 +71,7 @@ public abstract class Value implements ValueInterface {
     }
 
     @Override
-    public JsonNode value() {
+    public Object value() {
         return this.value;
     }
 

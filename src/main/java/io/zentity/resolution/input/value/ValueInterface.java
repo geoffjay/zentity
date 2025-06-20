@@ -17,7 +17,6 @@
  */
 package io.zentity.resolution.input.value;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.zentity.model.ValidationException;
 
 public interface ValueInterface extends Comparable<Value> {
@@ -27,12 +26,12 @@ public interface ValueInterface extends Comparable<Value> {
      *
      * @param value Attribute value.
      */
-    void validate(JsonNode value) throws ValidationException;
+    void validate(Object value) throws ValidationException;
 
     /**
-     * Serialize the attribute value from a JsonNode object to a String object.
+     * Serialize the attribute value from an Object to a String object.
      */
-    String serialize(JsonNode value);
+    String serialize(Object value);
 
     /**
      * Return the attribute type.

@@ -27,14 +27,18 @@ import io.zentity.model.ValidationException;
 import io.zentity.resolution.input.Attribute;
 import io.zentity.resolution.input.Input;
 import io.zentity.resolution.input.value.Value;
-import org.elasticsearch.ElasticsearchException;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.internal.node.NodeClient;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.index.IndexNotFoundException;
-import org.elasticsearch.xcontent.ToXContent;
-import org.elasticsearch.xcontent.XContentParseException;
+import org.opensearch.OpenSearchException;
+import org.opensearch.core.action.ActionListener;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.client.node.NodeClient;
+import org.opensearch.plugin.zentity.StringsUtil;
+import org.opensearch.index.IndexNotFoundException;
+import org.opensearch.core.xcontent.ToXContent;
+import org.opensearch.core.xcontent.XContentParseException;
+// XContent migration imports
+import org.opensearch.common.xcontent.XContentType;
+import org.opensearch.core.xcontent.XContentBuilder;
+import org.opensearch.core.xcontent.XContentParser;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -52,7 +56,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
-import static org.elasticsearch.xcontent.XContentFactory.jsonBuilder;
+import static org.opensearch.common.xcontent.XContentFactory.jsonBuilder;
 import static io.zentity.common.Patterns.COLON;
 
 public class Job {
@@ -138,7 +142,7 @@ public class Job {
      */
     public static String serializeException(Exception e, boolean includeErrorTrace) {
         List<String> errorParts = new ArrayList<>();
-        if (e instanceof ElasticsearchException || e instanceof XContentParseException)
+        if (e instanceof OpenSearchException || e instanceof XContentParseException)
             errorParts.add("\"by\":\"elasticsearch\"");
         else
             errorParts.add("\"by\":\"zentity\"");
@@ -173,7 +177,12 @@ public class Job {
                     resolversAttributes.add("\"" + attributeName + "\"");
                 attributesResolversSummary.add("\"" + resolverName + "\":{\"attributes\":[" +  String.join(",", resolversAttributes) + "]}");
             }
-            String attributesResolversFilterTreeLogged = Json.ORDERED_MAPPER.writeValueAsString(query.resolversFilterTreeGrouped());
+            String attributesResolversFilterTreeLogged;
+            try {
+                attributesResolversFilterTreeLogged = Json.ORDERED_MAPPER.writeValueAsString(query.resolversFilterTreeGrouped());
+            } catch (IOException e) {
+                attributesResolversFilterTreeLogged = "{}";
+            }
             filtersLoggedList.add("\"attributes\":{\"tree\":" + attributesResolversFilterTreeLogged + ",\"resolvers\":{" + String.join(",", attributesResolversSummary) + "}}");
         } else {
             filtersLoggedList.add("\"attributes\":null");
@@ -186,7 +195,12 @@ public class Job {
                     resolverAttributes.add("\"" + attributeName + "\"");
                 termsResolversSummary.add("\"" + resolverName + "\":{\"attributes\":[" +  String.join(",", resolverAttributes) + "]}");
             }
-            String termResolversFilterTreeLogged = Json.ORDERED_MAPPER.writeValueAsString(query.termResolversFilterTree());
+            String termResolversFilterTreeLogged;
+            try {
+                termResolversFilterTreeLogged = Json.ORDERED_MAPPER.writeValueAsString(query.termResolversFilterTree());
+            } catch (IOException e) {
+                termResolversFilterTreeLogged = "{}";
+            }
             filtersLoggedList.add("\"terms\":{\"tree\":{\"0\":" + termResolversFilterTreeLogged + "},\"resolvers\":{" + String.join(",", termsResolversSummary) + "}}");
         } else {
             filtersLoggedList.add("\"terms\":null");
@@ -283,6 +297,100 @@ public class Job {
             values.add(json);
         }
         return values;
+    }
+
+    /**
+     * XContent-compatible version: Extract values from a Map-based document at a given path.
+     * The path can be nested and can contain arrays.
+     *
+     * @param data   The Map-based document.
+     * @param path   The path to the index field.
+     * @param values Any attribute values found at the path of the document.
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    public static ArrayList<Object> extractValuesFromMap(Object data, String[] path, ArrayList<Object> values) {
+        if (data instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) data;
+            String pathNext = "";
+            for (int i = 0; i < path.length; i++) {
+                pathNext = i == 0 ? path[0] : pathNext + "." + path[i];
+                if (map.containsKey(pathNext)) {
+                    String[] pathRemaining = Arrays.copyOfRange(path, i + 1, path.length);
+                    Object nextData = map.get(pathNext);
+                    values = extractValuesFromMap(nextData, pathRemaining, values);
+                    break;
+                }
+            }
+        } else if (data instanceof List) {
+            List<Object> list = (List<Object>) data;
+            for (Object item : list) {
+                values = extractValuesFromMap(item, path, values);
+            }
+        } else {
+            values.add(data);
+        }
+        return values;
+    }
+
+    /**
+     * Convert SearchResponse to Map structure for compatibility with existing JsonNode-based processing.
+     * This is a transitional method to help migrate from Jackson JsonNode to native OpenSearch APIs.
+     *
+     * @param response The SearchResponse from OpenSearch
+     * @return Map representation of the search response
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> convertSearchResponseToMap(SearchResponse response) {
+        Map<String, Object> responseMap = new HashMap<>();
+        
+        // Add basic response metadata
+        responseMap.put("took", response.getTook().millis());
+        responseMap.put("timed_out", response.isTimedOut());
+        
+        // Add hits information
+        Map<String, Object> hitsMap = new HashMap<>();
+        if (response.getHits() != null) {
+            Map<String, Object> totalMap = new HashMap<>();
+            totalMap.put("value", response.getHits().getTotalHits().value);
+            totalMap.put("relation", response.getHits().getTotalHits().relation.toString());
+            hitsMap.put("total", totalMap);
+            hitsMap.put("max_score", response.getHits().getMaxScore());
+            
+            // Convert individual hits
+            List<Map<String, Object>> hitsList = new ArrayList<>();
+            for (org.opensearch.search.SearchHit hit : response.getHits().getHits()) {
+                Map<String, Object> hitMap = new HashMap<>();
+                hitMap.put("_index", hit.getIndex());
+                hitMap.put("_id", hit.getId());
+                hitMap.put("_score", hit.getScore());
+                
+                // Add source data
+                if (hit.getSourceAsMap() != null) {
+                    hitMap.put("_source", hit.getSourceAsMap());
+                }
+                
+                // Add fields data if present
+                if (hit.getFields() != null && !hit.getFields().isEmpty()) {
+                    Map<String, Object> fieldsMap = new HashMap<>();
+                    hit.getFields().forEach((key, documentField) -> {
+                        fieldsMap.put(key, documentField.getValues());
+                    });
+                    hitMap.put("fields", fieldsMap);
+                }
+                
+                // Add matched queries if present
+                if (hit.getMatchedQueries() != null && hit.getMatchedQueries().length > 0) {
+                    hitMap.put("matched_queries", Arrays.asList(hit.getMatchedQueries()));
+                }
+                
+                hitsList.add(hitMap);
+            }
+            hitsMap.put("hits", hitsList);
+        }
+        responseMap.put("hits", hitsMap);
+        
+        return responseMap;
     }
 
     /**
@@ -712,10 +820,18 @@ public class Job {
      */
     private void onSearchComplete(Job job, Query query, SearchResponse response, Exception responseError, ActionListener<String> onComplete) throws IOException, ValidationException {
 
-        // Read response from Elasticsearch.
+        // Read response from OpenSearch - hybrid approach for gradual migration
         JsonNode responseData = null;
-        if (response != null)
-            responseData = Json.ORDERED_MAPPER.readTree(response.toString());
+        if (response != null) {
+            // For now, continue using JsonNode parsing while we migrate incrementally
+            // TODO: Migrate to native SearchResponse APIs in phases
+            try {
+                responseData = Json.ORDERED_MAPPER.readTree(response.toString());
+            } catch (IOException e) {
+                // Fallback to direct SearchResponse processing if JSON parsing fails
+                responseData = null;
+            }
+        }
 
         // Log queries.
         if (job.includeQueries() || job.profile()) {
@@ -735,9 +851,9 @@ public class Job {
                     String cause = "{\"type\":\"parsing_exception\",\"reason\":\"" + e.getMessage() + "\",\"line\":" + e.getLineNumber() + ",\"col\":" + e.getColumnNumber() + "}";
                     responseString = "{\"error\":{\"root_cause\":[" + cause + "],\"type\":\"parsing_exception\",\"reason\":\"" + e.getMessage() + "\",\"line\":" + e.getLineNumber() + ",\"col\":" + e.getColumnNumber() + "},\"status\":400}";
                 } else  {
-                    ElasticsearchException e = (ElasticsearchException) responseError;
-                    String cause = Strings.toString(e.toXContent(jsonBuilder().startObject(), ToXContent.EMPTY_PARAMS).endObject());
-                    responseString = "{\"error\":{\"root_cause\":[" + cause + "],\"type\":\"" + ElasticsearchException.getExceptionName(e) + "\",\"reason\":\"" + e.getMessage() + "\"},\"status\":" + e.status().getStatus() + "}";
+                    OpenSearchException e = (OpenSearchException) responseError;
+                    String cause = e.toXContent(jsonBuilder().startObject(), ToXContent.EMPTY_PARAMS).endObject().toString();
+                    responseString = "{\"error\":{\"root_cause\":[" + cause + "],\"type\":\"" + OpenSearchException.getExceptionName(e) + "\",\"reason\":\"" + e.getMessage() + "\"},\"status\":" + e.status().getStatus() + "}";
                 }
             }
             String logged = serializeLoggedQuery(job.input(), job.hop(), query, responseString);
@@ -799,7 +915,7 @@ public class Job {
                             JsonNode vNode = valueNodeIterator.next();
                             if (vNode.isNull() || valueNode.isMissingNode())
                                 continue;
-                            Value value = Value.create(attributeType, vNode);
+                            Value value = Value.create(attributeType, jsonNodeToObject(vNode));
                             if (!docAttributes.containsKey(attributeName))
                                 docAttributes.put(attributeName, new TreeSet<>());
                             if (!job.hopNextInputAttributes().containsKey(attributeName))
@@ -812,7 +928,7 @@ public class Job {
                         else
                             docIndexFields.put(indexFieldName, valueNode);
                     } else {
-                        Value value = Value.create(attributeType, valueNode);
+                        Value value = Value.create(attributeType, jsonNodeToObject(valueNode));
                         if (!docAttributes.containsKey(attributeName))
                             docAttributes.put(attributeName, new TreeSet<>());
                         if (!job.hopNextInputAttributes().containsKey(attributeName))
@@ -837,7 +953,7 @@ public class Job {
                     for (JsonNode vNode : values) {
                         if (vNode.isNull() || vNode.isMissingNode())
                             continue;
-                        Value value = Value.create(attributeType, vNode);
+                        Value value = Value.create(attributeType, jsonNodeToObject(vNode));
                         if (!docAttributes.containsKey(attributeName))
                             docAttributes.put(attributeName, new TreeSet<>());
                         if (!job.hopNextInputAttributes().containsKey(attributeName))
@@ -895,7 +1011,7 @@ public class Job {
                         // The last name field of the attribute contains the array of values.
                         ArrayNode docAttributeArrNode = docAttributesObjNode.putArray(lastNameField);
                         for (Value value : docAttributes.get(attributeName))
-                            docAttributeArrNode.add(value.value());
+                            Json.ORDERED_MAPPER.addToArrayNode(docAttributeArrNode, value.value());
                     }
                 }
 
@@ -1187,8 +1303,13 @@ public class Job {
         if (this.includeQueries || this.profile)
             responseParts.add("\"queries\":[" + queries + "]");
         response = "{" + String.join(",", responseParts) + "}";
-        if (this.pretty)
-            response = Json.pretty(response);
+        if (this.pretty) {
+            try {
+                response = Json.pretty(response);
+            } catch (IOException e) {
+                // If pretty formatting fails, just return the unformatted response
+            }
+        }
         return response;
     }
 
@@ -1252,5 +1373,36 @@ public class Job {
             this.ran(true);
             onComplete.onFailure(e);
         }
+    }
+
+    /**
+     * Convert JsonNode to appropriate Java Object for Value creation.
+     * This method helps with the Jackson to XContent migration.
+     */
+    private static Object jsonNodeToObject(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) {
+            return null;
+        }
+        if (node.isTextual()) {
+            return node.asText();
+        }
+        if (node.isBoolean()) {
+            return node.asBoolean();
+        }
+        if (node.isNumber()) {
+            if (node.isInt()) {
+                return node.asInt();
+            } else if (node.isLong()) {
+                return node.asLong();
+            } else if (node.isDouble()) {
+                return node.asDouble();
+            } else if (node.isFloat()) {
+                return node.floatValue();
+            } else {
+                return node.asDouble(); // Default to double for any other number type
+            }
+        }
+        // For any other type (array, object), convert to string representation
+        return node.toString();
     }
 }

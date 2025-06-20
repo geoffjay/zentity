@@ -15,16 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.elasticsearch.plugin.zentity;
+package org.opensearch.plugin.zentity;
 
-import org.elasticsearch.core.Booleans;
-import org.elasticsearch.core.TimeValue;
-import org.elasticsearch.rest.RestRequest;
+import org.opensearch.OpenSearchStatusException;
+import org.opensearch.common.Booleans;
+import org.opensearch.common.unit.TimeValue;
+import org.opensearch.core.rest.RestStatus;
+import org.opensearch.rest.RestRequest;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
+
+class BadRequestException extends OpenSearchStatusException {
+    public BadRequestException(String message) {
+        this(message, null);
+    }
+
+    public BadRequestException(String message, Throwable cause) {
+        super(message, RestStatus.BAD_REQUEST, cause);
+    }
+}
 
 public class ParamsUtil {
     /**
