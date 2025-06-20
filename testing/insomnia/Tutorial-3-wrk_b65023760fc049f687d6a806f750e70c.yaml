@@ -1,0 +1,1561 @@
+type: collection.insomnia.rest/5.0
+name: Tutorial 3
+meta:
+  id: wrk_b65023760fc049f687d6a806f750e70c
+  created: 1750367687911
+  modified: 1750367929296
+  description: ""
+collection:
+  - url: "{{ _.opensearch_base_url }}/zentity_tutorial_3_*"
+    name: 1. Delete index
+    meta:
+      id: req_87dd4fb83c4747b98fd50db2c0016fd5
+      created: 1750367687928
+      modified: 1750393244897
+      isPrivate: false
+      description: ""
+      sortKey: -1750367687928
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: |-
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/zentity_tutorial_3_multiple_attribute_resolution"
+    name: 2. Create index
+    meta:
+      id: req_98cca27c616b483d88547d2025f515be
+      created: 1750368248710
+      modified: 1750391236338
+      isPrivate: false
+      description: ""
+      sortKey: -1750367687828
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "settings": {
+            "index": {
+              "number_of_shards": 1,
+              "number_of_replicas": 0,
+              "analysis" : {
+                "filter" : {
+                  "street_suffix_map" : {
+                    "pattern" : "(st)",
+                    "type" : "pattern_replace",
+                    "replacement" : "street"
+                  },
+                  "phonetic" : {
+                    "type" : "phonetic",
+                    "encoder" : "nysiis"
+                  },
+                  "punct_white" : {
+                    "pattern" : "\\p{Punct}",
+                    "type" : "pattern_replace",
+                    "replacement" : " "
+                  },
+                  "remove_non_digits" : {
+                    "pattern" : "[^\\d]",
+                    "type" : "pattern_replace",
+                    "replacement" : ""
+                  }
+                },
+                "analyzer" : {
+                  "name_clean" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white"
+                    ],
+                    "tokenizer" : "standard"
+                  },
+                  "name_phonetic" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white",
+                      "phonetic"
+                    ],
+                    "tokenizer" : "standard"
+                  },
+                  "street_clean" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white",
+                      "trim"
+                    ],
+                    "tokenizer" : "keyword"
+                  },
+                  "phone_clean" : {
+                    "filter" : [
+                      "remove_non_digits"
+                    ],
+                    "tokenizer" : "keyword"
+                  }
+                }
+              }
+            }
+          },
+          "mappings": {
+            "properties": {
+              "id": {
+                "type": "keyword"
+              },
+              "first_name": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  },
+                  "phonetic": {
+                    "type": "text",
+                    "analyzer": "name_phonetic"
+                  }
+                }
+              },
+              "last_name": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  },
+                  "phonetic": {
+                    "type": "text",
+                    "analyzer": "name_phonetic"
+                  }
+                }
+              },
+              "street": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "street_clean"
+                  }
+                }
+              },
+              "city": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  }
+                }
+              },
+              "state": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "phone": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "phone_clean"
+                  }
+                }
+              },
+              "email": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              }
+            }
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_bulk?refresh"
+    name: 3. Load data
+    meta:
+      id: req_96d72ce1275a49bfbc411a91b8e4bb7b
+      created: 1750368343831
+      modified: 1750368539387
+      isPrivate: false
+      description: ""
+      sortKey: -1750367687728
+    method: POST
+    body:
+      mimeType: ""
+      text: >
+        {"index": {"_id": "1", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "allie@example.net", "first_name":
+        "Allie", "id": "1", "last_name": "Jones", "phone": "202-555-1234",
+        "state": "DC", "street": "123 Main St"}
+
+        {"index": {"_id": "2", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "", "first_name": "Alicia", "id": "2",
+        "last_name": "Johnson", "phone": "202-123-4567", "state": "DC",
+        "street": "300 Main St"}
+
+        {"index": {"_id": "3", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "", "first_name": "Allie", "id": "3",
+        "last_name": "Jones", "phone": "", "state": "DC", "street": "123 Main
+        St"}
+
+        {"index": {"_id": "4", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "", "email": "", "first_name": "Ally", "id": "4", "last_name":
+        "Joans", "phone": "202-555-1234", "state": "", "street": ""}
+
+        {"index": {"_id": "5", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Arlington", "email": "ej@example.net", "first_name": "Eli",
+        "id": "5", "last_name": "Jonas", "phone": "", "state": "VA", "street":
+        "500 23rd Street"}
+
+        {"index": {"_id": "6", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "allie@example.net", "first_name":
+        "Allison", "id": "6", "last_name": "Jones", "phone": "202-555-1234",
+        "state": "DC", "street": "123 Main St"}
+
+        {"index": {"_id": "7", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "", "first_name": "Allison", "id": "7",
+        "last_name": "Smith", "phone": "+1 (202) 555 1234", "state": "DC",
+        "street": "555 Broad St"}
+
+        {"index": {"_id": "8", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "alan.smith@example.net", "first_name":
+        "Alan", "id": "8", "last_name": "Smith", "phone": "202-000-5555",
+        "state": "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "9", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "alan.smith@example.net", "first_name":
+        "Alan", "id": "9", "last_name": "Smith", "phone": "2020005555", "state":
+        "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "10", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "", "first_name": "Alison", "id": "10",
+        "last_name": "Smith", "phone": "202-555-9876", "state": "DC", "street":
+        "555 Broad St"}
+
+        {"index": {"_id": "11", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "", "email": "allie@example.net", "first_name": "Alison", "id":
+        "11", "last_name": "Jones-Smith", "phone": "2025559867", "state": "",
+        "street": ""}
+
+        {"index": {"_id": "12", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Washington", "email": "allison.j.smith@corp.example.net",
+        "first_name": "Allison", "id": "12", "last_name": "Jones-Smith",
+        "phone": "", "state": "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "13", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Arlington", "email": "allison.j.smith@corp.example.net",
+        "first_name": "Allison", "id": "13", "last_name": "Jones Smith",
+        "phone": "703-555-5555", "state": "VA", "street": "1 Corporate Way"}
+
+        {"index": {"_id": "14", "_index":
+        "zentity_tutorial_3_multiple_attribute_resolution"}}
+
+        {"city": "Arlington", "email": "elise.jonas@corp.example.net",
+        "first_name": "Elise", "id": "14", "last_name": "Jonas", "phone":
+        "703-555-5555", "state": "VA", "street": "1 Corporate Way"}
+    headers:
+      - name: Content-Type
+        value: application/x-ndjson
+        id: pair_28617f96138e48b7b9d84e600c788852
+      - name: User-Agent
+        value: insomnia/11.2.0
+        id: pair_bdf20a11f477449b809744ebe60595ab
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_3_person"
+    name: 4. Create entity model
+    meta:
+      id: req_eb9c1814864443918a1fa9c2158c3da9
+      created: 1750368565915
+      modified: 1750369102562
+      isPrivate: false
+      description: ""
+      sortKey: -1750367687628
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            }
+          },
+          "resolvers": {
+            "name_phone": {
+              "attributes": [ "first_name", "last_name", "phone" ]
+            }
+          },
+          "matchers": {
+            "simple": {
+              "clause": {
+                "match": {
+                  "{{ field }}": "{{ value }}"
+                }
+              }
+            },
+            "fuzzy": {
+              "clause": {
+                "match": {
+                  "{{ field }}": {
+                    "query": "{{ value }}",
+                    "fuzziness": "1"
+                  }
+                }
+              }
+            },
+            "exact": {
+              "clause": {
+                "term": {
+                  "{{ field }}": "{{ value }}"
+                }
+              }
+            }
+          },
+          "indices": {
+            "zentity_tutorial_3_multiple_attribute_resolution": {
+              "fields": {
+                "first_name.clean": {
+                  "attribute": "first_name",
+                  "matcher": "fuzzy"
+                },
+                "first_name.phonetic": {
+                  "attribute": "first_name",
+                  "matcher": "simple"
+                },
+                "last_name.clean": {
+                  "attribute": "last_name",
+                  "matcher": "fuzzy"
+                },
+                "last_name.phonetic": {
+                  "attribute": "last_name",
+                  "matcher": "simple"
+                },
+                "phone.clean": {
+                  "attribute": "phone",
+                  "matcher": "fuzzy"
+                }
+              }
+            }
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        // // Insomnia Post-Response Script
+
+        // // This script validates the important content from the Elasticsearch
+        response
+
+
+        // const response = insomnia.response.json();
+
+
+        // // Define expected values for validation
+
+        // const expectedIndex = ".zentity-models";
+
+        // const expectedId = "zentity_tutorial_3_person";
+
+        // const expectedResult = "created";
+
+
+        // // Validation function
+
+        // function validateResponse(response) {
+
+        //     const validations = [];
+            
+        //     // Validate _index
+
+        //     if (response._index === expectedIndex) {
+
+        //         validations.push({ field: '_index', status: 'PASS', value:
+        response._index });
+
+        //     } else {
+
+        //         validations.push({ 
+
+        //             field: '_index', 
+
+        //             status: 'FAIL', 
+
+        //             expected: expectedIndex, 
+
+        //             actual: response._index 
+
+        //         });
+
+        //     }
+            
+        //     // Validate _id
+
+        //     if (response._id === expectedId) {
+
+        //         validations.push({ field: '_id', status: 'PASS', value:
+        response._id });
+
+        //     } else {
+
+        //         validations.push({ 
+
+        //             field: '_id', 
+
+        //             status: 'FAIL', 
+
+        //             expected: expectedId, 
+
+        //             actual: response._id 
+
+        //         });
+
+        //     }
+            
+        //     // Validate result
+
+        //     if (response.result === expectedResult) {
+
+        //         validations.push({ field: 'result', status: 'PASS', value:
+        response.result });
+
+        //     } else {
+
+        //         validations.push({ 
+
+        //             field: 'result', 
+
+        //             status: 'FAIL', 
+
+        //             expected: expectedResult, 
+
+        //             actual: response.result 
+
+        //         });
+
+        //     }
+            
+        //     // Validate _version exists and is positive
+
+        //     if (response._version && response._version > 0) {
+
+        //         validations.push({ field: '_version', status: 'PASS', value:
+        response._version });
+
+        //     } else {
+
+        //         validations.push({ 
+
+        //             field: '_version', 
+
+        //             status: 'FAIL', 
+
+        //             message: 'Version should be a positive number',
+
+        //             actual: response._version 
+
+        //         });
+
+        //     }
+            
+        //     // Validate _shards structure
+
+        //     if (response._shards) {
+
+        //         const shards = response._shards;
+                
+        //         // Check if all shards were successful
+
+        //         if (shards.successful === shards.total && shards.failed ===
+        0) {
+
+        //             validations.push({ 
+
+        //                 field: '_shards', 
+
+        //                 status: 'PASS', 
+
+        //                 value: `${shards.successful}/${shards.total}
+        successful, ${shards.failed} failed` 
+
+        //             });
+
+        //         } else {
+
+        //             validations.push({ 
+
+        //                 field: '_shards', 
+
+        //                 status: 'FAIL', 
+
+        //                 message: 'Not all shards were successful',
+
+        //                 value: `${shards.successful}/${shards.total}
+        successful, ${shards.failed} failed` 
+
+        //             });
+
+        //         }
+
+        //     } else {
+
+        //         validations.push({ 
+
+        //             field: '_shards', 
+
+        //             status: 'FAIL', 
+
+        //             message: 'Shards information missing' 
+
+        //         });
+
+        //     }
+            
+        //     // Validate _seq_no exists
+
+        //     if (typeof response._seq_no === 'number' && response._seq_no >=
+        0) {
+
+        //         validations.push({ field: '_seq_no', status: 'PASS', value:
+        response._seq_no });
+
+        //     } else {
+
+        //         validations.push({ 
+
+        //             field: '_seq_no', 
+
+        //             status: 'FAIL', 
+
+        //             message: 'Sequence number should be a non-negative
+        number',
+
+        //             actual: response._seq_no 
+
+        //         });
+
+        //     }
+            
+        //     // Validate _primary_term exists
+
+        //     if (typeof response._primary_term === 'number' &&
+        response._primary_term > 0) {
+
+        //         validations.push({ field: '_primary_term', status: 'PASS',
+        value: response._primary_term });
+
+        //     } else {
+
+        //         validations.push({ 
+
+        //             field: '_primary_term', 
+
+        //             status: 'FAIL', 
+
+        //             message: 'Primary term should be a positive number',
+
+        //             actual: response._primary_term 
+
+        //         });
+
+        //     }
+            
+        //     return validations;
+
+        // }
+
+
+        // // Run validation
+
+        // const validationResults = validateResponse(response);
+
+
+        // // Count results
+
+        // const passCount = validationResults.filter(v => v.status ===
+        'PASS').length;
+
+        // const failCount = validationResults.filter(v => v.status ===
+        'FAIL').length;
+
+
+        // // Log results
+
+        // console.log('\n=== ELASTICSEARCH RESPONSE VALIDATION ===');
+
+        // console.log(`Total Validations: ${validationResults.length}`);
+
+        // console.log(`Passed: ${passCount}`);
+
+        // console.log(`Failed: ${failCount}`);
+
+        // console.log('=========================================\n');
+
+
+        // // Detailed results
+
+        // validationResults.forEach(validation => {
+
+        //     const status = validation.status === 'PASS' ? '✅' : '❌';
+
+        //     console.log(`${status} ${validation.field}:
+        ${validation.status}`);
+            
+        //     if (validation.status === 'PASS') {
+
+        //         console.log(`   Value: ${validation.value}`);
+
+        //     } else {
+
+        //         if (validation.expected && validation.actual !== undefined) {
+
+        //             console.log(`   Expected: ${validation.expected}`);
+
+        //             console.log(`   Actual: ${validation.actual}`);
+
+        //         } else if (validation.message) {
+
+        //             console.log(`   Issue: ${validation.message}`);
+
+        //             if (validation.actual !== undefined) {
+
+        //                 console.log(`   Actual: ${validation.actual}`);
+
+        //             }
+
+        //         }
+
+        //     }
+
+        //     console.log('');
+
+        // });
+
+
+        // // Set environment variables for use in other requests
+
+        // insomnia.environment.set('validation_passed', failCount === 0);
+
+        // insomnia.environment.set('validation_pass_count', passCount);
+
+        // insomnia.environment.set('validation_fail_count', failCount);
+
+        // insomnia.environment.set('document_version', response._version);
+
+        // insomnia.environment.set('document_seq_no', response._seq_no);
+
+
+        // // Fail the test if any validations failed
+
+        // if (failCount > 0) {
+
+        //     throw new Error(`Validation failed: ${failCount} out of
+        ${validationResults.length} checks failed`);
+
+        // }
+    settings:
+      renderRequestBody: false
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_3_person"
+    name: 0. Delete entity model
+    meta:
+      id: req_3f04076e799644a5a92b4d6bc1def87f
+      created: 1750368853430
+      modified: 1750392075811
+      isPrivate: false
+      description: ""
+      sortKey: -1750368853430
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: |-
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+        insomnia.test('Check if result is deleted', () => {
+        	const jsonBody = insomnia.response.json();
+
+        	insomnia.expect(jsonBody.result).to.be.oneOf(["deleted", "not_found"]);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_3_person"
+    name: 5. Validate entity model
+    meta:
+      id: req_3c771b217dc2438f9ddcf254103a6f0f
+      created: 1750369155226
+      modified: 1750369861962
+      isPrivate: false
+      description: ""
+      sortKey: -1750367687528
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      preRequest: ""
+      afterResponse: >-
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        insomnia.test('Check if attributes match', () => {
+        	const expectedAttributes = {
+        		"first_name": {
+        			"type": "string"
+        		},
+        		"last_name": {
+        			"type": "string"
+        		},
+        		"phone": {
+        			"type": "string"
+        		},
+        	};
+
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.attributes).to.eql(expectedAttributes);
+        });
+
+
+        insomnia.test('Check if resolvers match', () => {
+        	const expectedResolvers = {
+        		"name_phone": {
+              "attributes": [ "first_name", "last_name", "phone" ]
+            },
+        	};
+
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.resolvers).to.eql(expectedResolvers);
+        });
+
+
+        insomnia.test('Check if matchers match', () => {
+        	const expectedMatchers = {
+            "simple": {
+              "clause": {
+                "match": {
+                  "{{ field }}": "{{ value }}"
+                }
+              }
+            },
+            "fuzzy": {
+              "clause": {
+                "match": {
+                  "{{ field }}": {
+                    "query": "{{ value }}",
+                    "fuzziness": "1"
+                  }
+                }
+              }
+            },
+            "exact": {
+              "clause": {
+                "term": {
+                  "{{ field }}": "{{ value }}"
+                }
+              }
+            }
+          };
+
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.matchers).to.eql(expectedMatchers);
+        });
+
+
+        insomnia.test('Check if indices match', () => {
+        	const expectedIndices = {
+            "zentity_tutorial_3_multiple_attribute_resolution": {
+              "fields": {
+                "first_name.clean": {
+                  "attribute": "first_name",
+                  "matcher": "fuzzy"
+                },
+                "first_name.phonetic": {
+                  "attribute": "first_name",
+                  "matcher": "simple"
+                },
+                "last_name.clean": {
+                  "attribute": "last_name",
+                  "matcher": "fuzzy"
+                },
+                "last_name.phonetic": {
+                  "attribute": "last_name",
+                  "matcher": "simple"
+                },
+                "phone.clean": {
+                  "attribute": "phone",
+                  "matcher": "fuzzy"
+                }
+              }
+            }
+        	};
+
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.indices).to.eql(expectedIndices);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_3_person?pretty&_source=false"
+    name: 6. Resolution
+    meta:
+      id: req_d983f0d8a23b45b49fa40a9a4ce810dc
+      created: 1750371705316
+      modified: 1750395455530
+      isPrivate: false
+      description: ""
+      sortKey: -1750367687428
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allison" ],
+            "last_name": [ "Jones" ],
+            "phone": [ "202-555-9876" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResponse = {
+          "took" : 15,
+          "hits" : {
+            "total" : 2,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_3_multiple_attribute_resolution",
+              "_id" : "11",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "2025559867" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_3_multiple_attribute_resolution",
+              "_id" : "10",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "202-555-9876" ]
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(2);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(2);
+        });
+
+
+        insomnia.test('Hit objects have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes');
+          });
+        });
+
+
+        insomnia.test('Index name is correct', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._index).to.eql('zentity_tutorial_3_multiple_attribute_resolution');
+          });
+        });
+
+
+        insomnia.test('Hit IDs are correct', () => {
+          insomnia.expect(response.hits.hits[0]._id).to.eql('11');
+          insomnia.expect(response.hits.hits[1]._id).to.eql('10');
+        });
+
+
+        insomnia.test('Hop values show multi-hop resolution', () => {
+          insomnia.expect(response.hits.hits[0]._hop).to.eql(0);
+          insomnia.expect(response.hits.hits[1]._hop).to.eql(1);
+        });
+
+
+        insomnia.test('Query values are correct', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._query).to.eql(0);
+          });
+        });
+
+
+        insomnia.test('Attributes have required fields', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._attributes).to.have.all.keys('first_name', 'last_name', 'phone');
+          });
+        });
+
+
+        insomnia.test('First hit attributes are correct', () => {
+          const firstHit = response.hits.hits[0];
+          insomnia.expect(firstHit._attributes.first_name).to.eql(['Alison']);
+          insomnia.expect(firstHit._attributes.last_name).to.eql(['Jones-Smith']);
+          insomnia.expect(firstHit._attributes.phone).to.eql(['2025559867']);
+        });
+
+
+        insomnia.test('Second hit attributes are correct', () => {
+          const secondHit = response.hits.hits[1];
+          insomnia.expect(secondHit._attributes.first_name).to.eql(['Alison']);
+          insomnia.expect(secondHit._attributes.last_name).to.eql(['Smith']);
+          insomnia.expect(secondHit._attributes.phone).to.eql(['202-555-9876']);
+        });
+
+
+        insomnia.test('Phone numbers have different formats', () => {
+          insomnia.expect(response.hits.hits[0]._attributes.phone[0]).to.eql('2025559867');
+          insomnia.expect(response.hits.hits[1]._attributes.phone[0]).to.eql('202-555-9876');
+        });
+
+
+        insomnia.test('Last names show relationship patterns', () => {
+          insomnia.expect(response.hits.hits[0]._attributes.last_name[0]).to.eql('Jones-Smith');
+          insomnia.expect(response.hits.hits[1]._attributes.last_name[0]).to.eql('Smith');
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_3_person?pretty&_source=true"
+    name: 7. Resolution with source
+    meta:
+      id: req_808bd75141b347f1bfd17bcd5220f73e
+      created: 1750371735189
+      modified: 1750395332728
+      isPrivate: false
+      description: ""
+      sortKey: -1750367687328
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allison" ],
+            "last_name": [ "Jones" ],
+            "phone": [ "202-555-9876" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResponse = {
+          "took" : 16,
+          "hits" : {
+            "total" : 2,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_3_multiple_attribute_resolution",
+              "_id" : "11",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "2025559867" ]
+              },
+              "_source" : {
+                "city" : "",
+                "email" : "allie@example.net",
+                "first_name" : "Alison",
+                "id" : "11",
+                "last_name" : "Jones-Smith",
+                "phone" : "2025559867",
+                "state" : "",
+                "street" : ""
+              }
+            }, {
+              "_index" : "zentity_tutorial_3_multiple_attribute_resolution",
+              "_id" : "10",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "202-555-9876" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Alison",
+                "id" : "10",
+                "last_name" : "Smith",
+                "phone" : "202-555-9876",
+                "state" : "DC",
+                "street" : "555 Broad St"
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(2);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(2);
+        });
+
+
+        insomnia.test('Hit objects have required properties including _source',
+        () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes', '_source');
+          });
+        });
+
+
+        insomnia.test('Index name is correct', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._index).to.eql('zentity_tutorial_3_multiple_attribute_resolution');
+          });
+        });
+
+
+        insomnia.test('Hop values show multi-hop resolution', () => {
+          insomnia.expect(response.hits.hits[0]._hop).to.eql(0);
+          insomnia.expect(response.hits.hits[1]._hop).to.eql(1);
+        });
+
+
+        insomnia.test('Hit IDs are correct', () => {
+          insomnia.expect(response.hits.hits[0]._id).to.eql('11');
+          insomnia.expect(response.hits.hits[1]._id).to.eql('10');
+        });
+
+
+        insomnia.test('Source objects have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._source).to.have.all.keys('city', 'email', 'first_name', 'id', 'last_name', 'phone', 'state', 'street');
+          });
+        });
+
+
+        insomnia.test('First hit source data is correct', () => {
+          const firstHit = response.hits.hits[0];
+          insomnia.expect(firstHit._source.city).to.eql('');
+          insomnia.expect(firstHit._source.email).to.eql('allie@example.net');
+          insomnia.expect(firstHit._source.first_name).to.eql('Alison');
+          insomnia.expect(firstHit._source.id).to.eql('11');
+          insomnia.expect(firstHit._source.last_name).to.eql('Jones-Smith');
+          insomnia.expect(firstHit._source.phone).to.eql('2025559867');
+          insomnia.expect(firstHit._source.state).to.eql('');
+          insomnia.expect(firstHit._source.street).to.eql('');
+        });
+
+
+        insomnia.test('Second hit source data is correct', () => {
+          const secondHit = response.hits.hits[1];
+          insomnia.expect(secondHit._source.city).to.eql('Washington');
+          insomnia.expect(secondHit._source.email).to.eql('');
+          insomnia.expect(secondHit._source.first_name).to.eql('Alison');
+          insomnia.expect(secondHit._source.id).to.eql('10');
+          insomnia.expect(secondHit._source.last_name).to.eql('Smith');
+          insomnia.expect(secondHit._source.phone).to.eql('202-555-9876');
+          insomnia.expect(secondHit._source.state).to.eql('DC');
+          insomnia.expect(secondHit._source.street).to.eql('555 Broad St');
+        });
+
+
+        insomnia.test('Attributes match source data', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._attributes.first_name[0]).to.eql(hit._source.first_name);
+            insomnia.expect(hit._attributes.last_name[0]).to.eql(hit._source.last_name);
+            insomnia.expect(hit._attributes.phone[0]).to.eql(hit._source.phone);
+          });
+        });
+
+
+        insomnia.test('Phone formats are preserved differently', () => {
+          insomnia.expect(response.hits.hits[0]._source.phone).to.eql('2025559867');
+          insomnia.expect(response.hits.hits[1]._source.phone).to.eql('202-555-9876');
+        });
+
+
+        insomnia.test('Address data patterns are different', () => {
+          // First hit has no address but has email
+          insomnia.expect(response.hits.hits[0]._source.email).to.not.eql('');
+          insomnia.expect(response.hits.hits[0]._source.city).to.eql('');
+          
+          // Second hit has address but no email
+          insomnia.expect(response.hits.hits[1]._source.email).to.eql('');
+          insomnia.expect(response.hits.hits[1]._source.city).to.not.eql('');
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_3_person?pretty&_source=true&_exp\
+      lanation=true"
+    name: 8. Resolution with explanation
+    meta:
+      id: req_0a8a693bc4704d929d2eabf9253c6461
+      created: 1750371736880
+      modified: 1750395402213
+      isPrivate: false
+      description: ""
+      sortKey: -1750367687228
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allison" ],
+            "last_name": [ "Jones" ],
+            "phone": [ "202-555-9876" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResposne = {
+          "took" : 20,
+          "hits" : {
+            "total" : 2,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_3_multiple_attribute_resolution",
+              "_id" : "11",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Jones-Smith" ],
+                "phone" : [ "2025559867" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_phone" : {
+                    "attributes" : [ "first_name", "last_name", "phone" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Alison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Alison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones-Smith",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "phone",
+                  "target_field" : "phone.clean",
+                  "target_value" : "2025559867",
+                  "input_value" : "202-555-9876",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "",
+                "email" : "allie@example.net",
+                "first_name" : "Alison",
+                "id" : "11",
+                "last_name" : "Jones-Smith",
+                "phone" : "2025559867",
+                "state" : "",
+                "street" : ""
+              }
+            }, {
+              "_index" : "zentity_tutorial_3_multiple_attribute_resolution",
+              "_id" : "10",
+              "_hop" : 1,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Alison" ],
+                "last_name" : [ "Smith" ],
+                "phone" : [ "202-555-9876" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_phone" : {
+                    "attributes" : [ "first_name", "last_name", "phone" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Alison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Alison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Alison",
+                  "input_value" : "Alison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Alison",
+                  "input_value" : "Allison",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Smith",
+                  "input_value" : "Jones-Smith",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "phone",
+                  "target_field" : "phone.clean",
+                  "target_value" : "202-555-9876",
+                  "input_value" : "202-555-9876",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "phone",
+                  "target_field" : "phone.clean",
+                  "target_value" : "202-555-9876",
+                  "input_value" : "2025559867",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Alison",
+                "id" : "10",
+                "last_name" : "Smith",
+                "phone" : "202-555-9876",
+                "state" : "DC",
+                "street" : "555 Broad St"
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(2);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(2);
+        });
+
+
+        insomnia.test('Hit objects have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes', '_explanation', '_source');
+          });
+        });
+
+
+        insomnia.test('Resolver is name_phone with three attributes', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._explanation.resolvers).to.have.property('name_phone');
+            insomnia.expect(hit._explanation.resolvers.name_phone.attributes).to.eql(['first_name', 'last_name', 'phone']);
+          });
+        });
+
+
+        insomnia.test('Hop values show multi-hop resolution', () => {
+          insomnia.expect(response.hits.hits[0]._hop).to.eql(0);
+          insomnia.expect(response.hits.hits[1]._hop).to.eql(1);
+        });
+
+
+        insomnia.test('First hit has 5 matches', () => {
+          insomnia.expect(response.hits.hits[0]._explanation.matches).to.have.lengthOf(5);
+        });
+
+
+        insomnia.test('Second hit has 8 matches', () => {
+          insomnia.expect(response.hits.hits[1]._explanation.matches).to.have.lengthOf(8);
+        });
+
+
+        insomnia.test('All matches have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              insomnia.expect(match).to.have.all.keys('attribute', 'target_field', 'target_value', 'input_value', 'input_matcher', 'input_matcher_params');
+            });
+          });
+        });
+
+
+        insomnia.test('Phone matching shows format variations', () => {
+          const firstHitPhoneMatch = response.hits.hits[0]._explanation.matches.find(m => m.attribute === 'phone');
+          insomnia.expect(firstHitPhoneMatch.target_value).to.eql('2025559867');
+          insomnia.expect(firstHitPhoneMatch.input_value).to.eql('202-555-9876');
+          
+          const secondHitPhoneMatches = response.hits.hits[1]._explanation.matches.filter(m => m.attribute === 'phone');
+          insomnia.expect(secondHitPhoneMatches).to.have.lengthOf(2);
+        });
+
+
+        insomnia.test('Name matching shows input variations', () => {
+          // First hit shows Allison -> Alison matching
+          const firstHitFirstNameMatch = response.hits.hits[0]._explanation.matches.find(m => m.attribute === 'first_name');
+          insomnia.expect(firstHitFirstNameMatch.input_value).to.eql('Allison');
+          insomnia.expect(firstHitFirstNameMatch.target_value).to.eql('Alison');
+          
+          // First hit shows Jones -> Jones-Smith matching
+          const firstHitLastNameMatch = response.hits.hits[0]._explanation.matches.find(m => m.attribute === 'last_name');
+          insomnia.expect(firstHitLastNameMatch.input_value).to.eql('Jones');
+          insomnia.expect(firstHitLastNameMatch.target_value).to.eql('Jones-Smith');
+        });
+
+
+        insomnia.test('Second hit shows bidirectional matching', () => {
+          const secondHitLastNameMatch = response.hits.hits[1]._explanation.matches.find(m => m.attribute === 'last_name');
+          insomnia.expect(secondHitLastNameMatch.input_value).to.eql('Jones-Smith');
+          insomnia.expect(secondHitLastNameMatch.target_value).to.eql('Smith');
+        });
+
+
+        insomnia.test('Matcher types are consistent with field types', () => {
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              if (match.target_field.includes('.clean')) {
+                insomnia.expect(match.input_matcher).to.eql('fuzzy');
+              } else if (match.target_field.includes('.phonetic')) {
+                insomnia.expect(match.input_matcher).to.eql('simple');
+              }
+            });
+          });
+        });
+
+
+        insomnia.test('Attributes contain all three types', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._attributes).to.have.all.keys('first_name', 'last_name', 'phone');
+          });
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_5c8c367bcdc0c4acfb8cf76732b023a6fe52baf3
+    created: 1750367687914
+    modified: 1750395461517
+environments:
+  name: Base Environment
+  meta:
+    id: env_5c8c367bcdc0c4acfb8cf76732b023a6fe52baf3
+    created: 1750367687913
+    modified: 1750395461517
+    isPrivate: false
+  data:
+    opensearch_base_url: http://localhost:9201
+    "": ""

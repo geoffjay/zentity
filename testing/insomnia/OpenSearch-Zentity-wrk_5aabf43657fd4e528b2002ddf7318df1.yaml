@@ -1,0 +1,16 @@
+type: environment.insomnia.rest/5.0
+name: OpenSearch Zentity
+meta:
+  id: wrk_5aabf43657fd4e528b2002ddf7318df1
+  created: 1750368060189
+  modified: 1750368060189
+  description: ""
+environments:
+  name: Base Environment
+  meta:
+    id: env_2dff8bf50eb136124d6b2cf34867a47a6f637609
+    created: 1750368060191
+    modified: 1750396685996
+    isPrivate: false
+  data:
+    base_url: http://localhost:9201

@@ -1,0 +1,1323 @@
+type: collection.insomnia.rest/5.0
+name: Tutorial 2
+meta:
+  id: wrk_bbe4644afdbd4c5e92fb49aa7e8e3d6d
+  created: 1750367960062
+  modified: 1750367960062
+  description: ""
+collection:
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_2_person?pretty&_source=true"
+    name: 9. Resolution with source
+    meta:
+      id: req_e21cc2189b2541b7ac06ce6f3a296b8b
+      created: 1750373514538
+      modified: 1750395080523
+      isPrivate: false
+      description: ""
+      sortKey: -1750373514538
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allie" ],
+            "last_name": [ "Jones" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResponse = {
+          "took" : 9,
+          "hits" : {
+            "total" : 3,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "1",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "allie@example.net",
+                "first_name" : "Allie",
+                "id" : "1",
+                "last_name" : "Jones",
+                "phone" : "202-555-1234",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "3",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Allie",
+                "id" : "3",
+                "last_name" : "Jones",
+                "phone" : "",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "4",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Ally" ],
+                "last_name" : [ "Joans" ]
+              },
+              "_source" : {
+                "city" : "",
+                "email" : "",
+                "first_name" : "Ally",
+                "id" : "4",
+                "last_name" : "Joans",
+                "phone" : "202-555-1234",
+                "state" : "",
+                "street" : ""
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(3);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(3);
+        });
+
+
+        insomnia.test('Hit objects have required properties including _source',
+        () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes', '_source');
+          });
+        });
+
+
+        insomnia.test('Hit values are correct', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._index).to.eql('zentity_tutorial_2_robust_name_matching');
+            insomnia.expect(hit._hop).to.eql(0);
+            insomnia.expect(hit._query).to.eql(0);
+          });
+        });
+
+
+        insomnia.test('Hit IDs are correct', () => {
+          insomnia.expect(response.hits.hits[0]._id).to.eql('1');
+          insomnia.expect(response.hits.hits[1]._id).to.eql('3');
+          insomnia.expect(response.hits.hits[2]._id).to.eql('4');
+        });
+
+
+        insomnia.test('Source objects have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._source).to.have.all.keys('city', 'email', 'first_name', 'id', 'last_name', 'phone', 'state', 'street');
+          });
+        });
+
+
+        insomnia.test('First hit data is correct', () => {
+          const firstHit = response.hits.hits[0];
+          insomnia.expect(firstHit._attributes.first_name).to.eql(['Allie']);
+          insomnia.expect(firstHit._attributes.last_name).to.eql(['Jones']);
+          insomnia.expect(firstHit._source.city).to.eql('Washington');
+          insomnia.expect(firstHit._source.email).to.eql('allie@example.net');
+          insomnia.expect(firstHit._source.phone).to.eql('202-555-1234');
+          insomnia.expect(firstHit._source.state).to.eql('DC');
+          insomnia.expect(firstHit._source.street).to.eql('123 Main St');
+        });
+
+
+        insomnia.test('Second hit data is correct', () => {
+          const secondHit = response.hits.hits[1];
+          insomnia.expect(secondHit._attributes.first_name).to.eql(['Allie']);
+          insomnia.expect(secondHit._attributes.last_name).to.eql(['Jones']);
+          insomnia.expect(secondHit._source.city).to.eql('Washington');
+          insomnia.expect(secondHit._source.email).to.eql('');
+          insomnia.expect(secondHit._source.phone).to.eql('');
+          insomnia.expect(secondHit._source.state).to.eql('DC');
+          insomnia.expect(secondHit._source.street).to.eql('123 Main St');
+        });
+
+
+        insomnia.test('Third hit data is correct', () => {
+          const thirdHit = response.hits.hits[2];
+          insomnia.expect(thirdHit._attributes.first_name).to.eql(['Ally']);
+          insomnia.expect(thirdHit._attributes.last_name).to.eql(['Joans']);
+          insomnia.expect(thirdHit._source.city).to.eql('');
+          insomnia.expect(thirdHit._source.email).to.eql('');
+          insomnia.expect(thirdHit._source.phone).to.eql('202-555-1234');
+          insomnia.expect(thirdHit._source.state).to.eql('');
+          insomnia.expect(thirdHit._source.street).to.eql('');
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_2_person?pretty&_source=false"
+    name: 8. Resolution
+    meta:
+      id: req_62caf542cd684b45946c4628982d981d
+      created: 1750373514659
+      modified: 1750394875814
+      isPrivate: false
+      description: ""
+      sortKey: -1750373514659
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allie" ],
+            "last_name": [ "Jones" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResponse = {
+          "took" : 10,
+          "hits" : {
+            "total" : 3,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "1",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "3",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ]
+              }
+            }, {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "4",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Ally" ],
+                "last_name" : [ "Joans" ]
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(3);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(3);
+        });
+
+
+        insomnia.test('Hit objects have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes');
+          });
+        });
+
+
+        insomnia.test('Hit values are correct', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._index).to.eql('zentity_tutorial_2_robust_name_matching');
+            insomnia.expect(hit._hop).to.eql(0);
+            insomnia.expect(hit._query).to.eql(0);
+          });
+        });
+
+
+        insomnia.test('Hit IDs are correct', () => {
+          insomnia.expect(response.hits.hits[0]._id).to.eql('1');
+          insomnia.expect(response.hits.hits[1]._id).to.eql('3');
+          insomnia.expect(response.hits.hits[2]._id).to.eql('4');
+        });
+
+
+        insomnia.test('First two hits have matching attributes', () => {
+          insomnia.expect(response.hits.hits[0]._attributes.first_name).to.eql(['Allie']);
+          insomnia.expect(response.hits.hits[0]._attributes.last_name).to.eql(['Jones']);
+          insomnia.expect(response.hits.hits[1]._attributes.first_name).to.eql(['Allie']);
+          insomnia.expect(response.hits.hits[1]._attributes.last_name).to.eql(['Jones']);
+        });
+
+
+        insomnia.test('Third hit has variant attributes', () => {
+          insomnia.expect(response.hits.hits[2]._attributes.first_name).to.eql(['Ally']);
+          insomnia.expect(response.hits.hits[2]._attributes.last_name).to.eql(['Joans']);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_2_person"
+    name: 6. Create entity model
+    meta:
+      id: req_559fb907fdb24cb1a4fd2da0be6e44ae
+      created: 1750373514821
+      modified: 1750374962417
+      isPrivate: false
+      description: ""
+      sortKey: -1750373514821
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            }
+          },
+          "resolvers": {
+            "name_only": {
+              "attributes": [ "first_name", "last_name" ]
+            }
+          },
+          "matchers": {
+            "simple": {
+              "clause": {
+                "match": {
+                  "{{ field }}": "{{ value }}"
+                }
+              }
+            },
+            "fuzzy": {
+              "clause": {
+                "match": {
+                  "{{ field }}": {
+                    "query": "{{ value }}",
+                    "fuzziness": "1"
+                  }
+                }
+              }
+            }
+          },
+          "indices": {
+            "zentity_tutorial_2_robust_name_matching": {
+              "fields": {
+                "first_name.clean": {
+                  "attribute": "first_name",
+                  "matcher": "fuzzy"
+                },
+                "first_name.phonetic": {
+                  "attribute": "first_name",
+                  "matcher": "simple"
+                },
+                "last_name.clean": {
+                  "attribute": "last_name",
+                  "matcher": "fuzzy"
+                },
+                "last_name.phonetic": {
+                  "attribute": "last_name",
+                  "matcher": "simple"
+                }
+              }
+            }
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: |-
+        const expectedResponse = {
+          "_index" : ".zentity-models",
+          "_id" : "zentity_tutorial_2_person",
+          "_version" : 1,
+          "result" : "created",
+          "_shards" : {
+            "total" : 2,
+            "successful" : 1,
+            "failed" : 0
+          },
+          "_seq_no" : 1,
+          "_primary_term" : 1
+        };
+    settings:
+      renderRequestBody: false
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_bulk?refresh"
+    name: 5. Load data
+    meta:
+      id: req_6264b5b8321d4ddca5dc9588ebb156de
+      created: 1750373515023
+      modified: 1750374912269
+      isPrivate: false
+      description: ""
+      sortKey: -1750373515023
+    method: POST
+    body:
+      mimeType: ""
+      text: >
+        {"index": {"_id": "1", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "allie@example.net", "first_name":
+        "Allie", "id": "1", "last_name": "Jones", "phone": "202-555-1234",
+        "state": "DC", "street": "123 Main St"}
+
+        {"index": {"_id": "2", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "", "first_name": "Alicia", "id": "2",
+        "last_name": "Johnson", "phone": "202-123-4567", "state": "DC",
+        "street": "300 Main St"}
+
+        {"index": {"_id": "3", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "", "first_name": "Allie", "id": "3",
+        "last_name": "Jones", "phone": "", "state": "DC", "street": "123 Main
+        St"}
+
+        {"index": {"_id": "4", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "", "email": "", "first_name": "Ally", "id": "4", "last_name":
+        "Joans", "phone": "202-555-1234", "state": "", "street": ""}
+
+        {"index": {"_id": "5", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Arlington", "email": "ej@example.net", "first_name": "Eli",
+        "id": "5", "last_name": "Jonas", "phone": "", "state": "VA", "street":
+        "500 23rd Street"}
+
+        {"index": {"_id": "6", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "allie@example.net", "first_name":
+        "Allison", "id": "6", "last_name": "Jones", "phone": "202-555-1234",
+        "state": "DC", "street": "123 Main St"}
+
+        {"index": {"_id": "7", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "", "first_name": "Allison", "id": "7",
+        "last_name": "Smith", "phone": "+1 (202) 555 1234", "state": "DC",
+        "street": "555 Broad St"}
+
+        {"index": {"_id": "8", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "alan.smith@example.net", "first_name":
+        "Alan", "id": "8", "last_name": "Smith", "phone": "202-000-5555",
+        "state": "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "9", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "alan.smith@example.net", "first_name":
+        "Alan", "id": "9", "last_name": "Smith", "phone": "2020005555", "state":
+        "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "10", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "", "first_name": "Alison", "id": "10",
+        "last_name": "Smith", "phone": "202-555-9876", "state": "DC", "street":
+        "555 Broad St"}
+
+        {"index": {"_id": "11", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "", "email": "allie@example.net", "first_name": "Alison", "id":
+        "11", "last_name": "Jones-Smith", "phone": "2025559867", "state": "",
+        "street": ""}
+
+        {"index": {"_id": "12", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Washington", "email": "allison.j.smith@corp.example.net",
+        "first_name": "Allison", "id": "12", "last_name": "Jones-Smith",
+        "phone": "", "state": "DC", "street": "555 Broad St"}
+
+        {"index": {"_id": "13", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Arlington", "email": "allison.j.smith@corp.example.net",
+        "first_name": "Allison", "id": "13", "last_name": "Jones Smith",
+        "phone": "703-555-5555", "state": "VA", "street": "1 Corporate Way"}
+
+        {"index": {"_id": "14", "_index":
+        "zentity_tutorial_2_robust_name_matching"}}
+
+        {"city": "Arlington", "email": "elise.jonas@corp.example.net",
+        "first_name": "Elise", "id": "14", "last_name": "Jonas", "phone":
+        "703-555-5555", "state": "VA", "street": "1 Corporate Way"}
+    headers:
+      - name: Content-Type
+        value: application/x-ndjson
+        id: pair_f2574dc9f0434a38bd75fc95f88b3b6b
+      - name: User-Agent
+        value: insomnia/11.2.0
+        id: pair_fbbdf5b1f6794937a34f409edfe419a4
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/zentity_tutorial_2_robust_name_matching/_analyze"
+    name: 3. Check index analyze clean
+    meta:
+      id: req_d9406db0833044818c6e26a3464993c8
+      created: 1750373515185
+      modified: 1750374834324
+      isPrivate: false
+      description: ""
+      sortKey: -1750373515185
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "text": "Alice Jones-Smith",
+          "analyzer": "name_clean"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: |-
+        const expectedResponse = {
+          "tokens": [
+            {
+              "token": "alice",
+              "start_offset": 0,
+              "end_offset": 5,
+              "type": "<ALPHANUM>",
+              "position": 0
+            },
+            {
+              "token": "jones",
+              "start_offset": 6,
+              "end_offset": 11,
+              "type": "<ALPHANUM>",
+              "position": 1
+            },
+            {
+              "token": "smith",
+              "start_offset": 12,
+              "end_offset": 17,
+              "type": "<ALPHANUM>",
+              "position": 2
+            }
+          ]
+        };
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/zentity_tutorial_2_robust_name_matching"
+    name: 2. Create index
+    meta:
+      id: req_e3bbd321678c4e30ba32d15048163d8b
+      created: 1750373515325
+      modified: 1750374797502
+      isPrivate: false
+      description: ""
+      sortKey: -1750373515325
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "settings": {
+            "index": {
+              "number_of_shards": 1,
+              "number_of_replicas": 0,
+              "analysis" : {
+                "filter" : {
+                  "street_suffix_map" : {
+                    "pattern" : "(st)",
+                    "type" : "pattern_replace",
+                    "replacement" : "street"
+                  },
+                  "phonetic" : {
+                    "type" : "phonetic",
+                    "encoder" : "nysiis"
+                  },
+                  "punct_white" : {
+                    "pattern" : "\\p{Punct}",
+                    "type" : "pattern_replace",
+                    "replacement" : " "
+                  },
+                  "remove_non_digits" : {
+                    "pattern" : "[^\\d]",
+                    "type" : "pattern_replace",
+                    "replacement" : ""
+                  }
+                },
+                "analyzer" : {
+                  "name_clean" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white"
+                    ],
+                    "tokenizer" : "standard"
+                  },
+                  "name_phonetic" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white",
+                      "phonetic"
+                    ],
+                    "tokenizer" : "standard"
+                  },
+                  "street_clean" : {
+                    "filter" : [
+                      "icu_normalizer",
+                      "icu_folding",
+                      "punct_white",
+                      "trim"
+                    ],
+                    "tokenizer" : "keyword"
+                  },
+                  "phone_clean" : {
+                    "filter" : [
+                      "remove_non_digits"
+                    ],
+                    "tokenizer" : "keyword"
+                  }
+                }
+              }
+            }
+          },
+          "mappings": {
+            "properties": {
+              "id": {
+                "type": "keyword"
+              },
+              "first_name": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  },
+                  "phonetic": {
+                    "type": "text",
+                    "analyzer": "name_phonetic"
+                  }
+                }
+              },
+              "last_name": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  },
+                  "phonetic": {
+                    "type": "text",
+                    "analyzer": "name_phonetic"
+                  }
+                }
+              },
+              "street": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "street_clean"
+                  }
+                }
+              },
+              "city": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "name_clean"
+                  }
+                }
+              },
+              "state": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "phone": {
+                "type": "text",
+                "fields": {
+                  "clean": {
+                    "type": "text",
+                    "analyzer": "phone_clean"
+                  }
+                }
+              },
+              "email": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
+                  }
+                }
+              }
+            }
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/zentity_tutorial_2_*"
+    name: 1. Delete index
+    meta:
+      id: req_b315fd2c691c4fef9a0fb5c38cab8284
+      created: 1750373515462
+      modified: 1750392140191
+      isPrivate: false
+      description: ""
+      sortKey: -1750373515462
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: |-
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url
+      }}/_zentity/resolution/zentity_tutorial_2_person?pretty&_source=true&_exp\
+      lanation=true"
+    name: 10. Resolution with explanation
+    meta:
+      id: req_adad1fd587904edba4f6eb97c6801901
+      created: 1750373583784
+      modified: 1750395074981
+      isPrivate: false
+      description: ""
+      sortKey: -1750373514438
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "attributes": {
+            "first_name": [ "Allie" ],
+            "last_name": [ "Jones" ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedResponse = {
+          "took" : 12,
+          "hits" : {
+            "total" : 3,
+            "hits" : [ {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "1",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_only" : {
+                    "attributes" : [ "first_name", "last_name" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allie",
+                  "input_value" : "Allie",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allie",
+                  "input_value" : "Allie",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "allie@example.net",
+                "first_name" : "Allie",
+                "id" : "1",
+                "last_name" : "Jones",
+                "phone" : "202-555-1234",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "3",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Allie" ],
+                "last_name" : [ "Jones" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_only" : {
+                    "attributes" : [ "first_name", "last_name" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.clean",
+                  "target_value" : "Allie",
+                  "input_value" : "Allie",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Allie",
+                  "input_value" : "Allie",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.clean",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "fuzzy",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Jones",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "Washington",
+                "email" : "",
+                "first_name" : "Allie",
+                "id" : "3",
+                "last_name" : "Jones",
+                "phone" : "",
+                "state" : "DC",
+                "street" : "123 Main St"
+              }
+            }, {
+              "_index" : "zentity_tutorial_2_robust_name_matching",
+              "_id" : "4",
+              "_hop" : 0,
+              "_query" : 0,
+              "_attributes" : {
+                "first_name" : [ "Ally" ],
+                "last_name" : [ "Joans" ]
+              },
+              "_explanation" : {
+                "resolvers" : {
+                  "name_only" : {
+                    "attributes" : [ "first_name", "last_name" ]
+                  }
+                },
+                "matches" : [ {
+                  "attribute" : "first_name",
+                  "target_field" : "first_name.phonetic",
+                  "target_value" : "Ally",
+                  "input_value" : "Allie",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                }, {
+                  "attribute" : "last_name",
+                  "target_field" : "last_name.phonetic",
+                  "target_value" : "Joans",
+                  "input_value" : "Jones",
+                  "input_matcher" : "simple",
+                  "input_matcher_params" : { }
+                } ]
+              },
+              "_source" : {
+                "city" : "",
+                "email" : "",
+                "first_name" : "Ally",
+                "id" : "4",
+                "last_name" : "Joans",
+                "phone" : "202-555-1234",
+                "state" : "",
+                "street" : ""
+              }
+            } ]
+          }
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        const response = insomnia.response.json();
+
+
+        insomnia.test('Response has correct top-level structure', () => {
+          insomnia.expect(response).to.have.property('took');
+          insomnia.expect(response).to.have.property('hits');
+        });
+
+
+        insomnia.test('Took value exists and is a number', () => {
+          insomnia.expect(response.took).to.be.a('number');
+        });
+
+
+        insomnia.test('Hits structure is correct', () => {
+          insomnia.expect(response.hits.total).to.eql(3);
+          insomnia.expect(response.hits.hits).to.have.lengthOf(3);
+        });
+
+
+        insomnia.test('Hit objects have required properties', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit).to.have.all.keys('_index', '_id', '_hop', '_query', '_attributes', '_explanation', '_source');
+          });
+        });
+
+
+        insomnia.test('Explanation structure is correct', () => {
+          response.hits.hits.forEach(hit => {
+            insomnia.expect(hit._explanation).to.have.property('resolvers');
+            insomnia.expect(hit._explanation).to.have.property('matches');
+            insomnia.expect(hit._explanation.resolvers).to.have.property('name_only');
+            insomnia.expect(hit._explanation.resolvers.name_only.attributes).to.eql(['first_name', 'last_name']);
+          });
+        });
+
+
+        insomnia.test('First two hits have 4 matches each (clean + phonetic)',
+        () => {
+          insomnia.expect(response.hits.hits[0]._explanation.matches).to.have.lengthOf(4);
+          insomnia.expect(response.hits.hits[1]._explanation.matches).to.have.lengthOf(4);
+        });
+
+
+        insomnia.test('Third hit has 2 matches (phonetic only)', () => {
+          insomnia.expect(response.hits.hits[2]._explanation.matches).to.have.lengthOf(2);
+        });
+
+
+        insomnia.test('First two hits have clean and phonetic field matches', ()
+        => {
+          [0, 1].forEach(index => {
+            const matches = response.hits.hits[index]._explanation.matches;
+            const targetFields = matches.map(m => m.target_field);
+            insomnia.expect(targetFields).to.include('first_name.clean');
+            insomnia.expect(targetFields).to.include('first_name.phonetic');
+            insomnia.expect(targetFields).to.include('last_name.clean');
+            insomnia.expect(targetFields).to.include('last_name.phonetic');
+          });
+        });
+
+
+        insomnia.test('Third hit has only phonetic field matches', () => {
+          const matches = response.hits.hits[2]._explanation.matches;
+          const targetFields = matches.map(m => m.target_field);
+          insomnia.expect(targetFields).to.eql(['first_name.phonetic', 'last_name.phonetic']);
+        });
+
+
+        insomnia.test('Matcher types are correct', () => {
+          response.hits.hits.forEach(hit => {
+            hit._explanation.matches.forEach(match => {
+              if (match.target_field.includes('.clean')) {
+                insomnia.expect(match.input_matcher).to.eql('fuzzy');
+              } else if (match.target_field.includes('.phonetic')) {
+                insomnia.expect(match.input_matcher).to.eql('simple');
+              }
+            });
+          });
+        });
+
+
+        insomnia.test('Third hit shows phonetic matching with different
+        input/target values', () => {
+          const thirdHit = response.hits.hits[2];
+          const firstNameMatch = thirdHit._explanation.matches.find(m => m.attribute === 'first_name');
+          const lastNameMatch = thirdHit._explanation.matches.find(m => m.attribute === 'last_name');
+          
+          insomnia.expect(firstNameMatch.input_value).to.eql('Allie');
+          insomnia.expect(firstNameMatch.target_value).to.eql('Ally');
+          insomnia.expect(lastNameMatch.input_value).to.eql('Jones');
+          insomnia.expect(lastNameMatch.target_value).to.eql('Joans');
+        });
+
+
+        insomnia.test('Attributes reflect the matched values', () => {
+          insomnia.expect(response.hits.hits[0]._attributes.first_name).to.eql(['Allie']);
+          insomnia.expect(response.hits.hits[0]._attributes.last_name).to.eql(['Jones']);
+          insomnia.expect(response.hits.hits[2]._attributes.first_name).to.eql(['Ally']);
+          insomnia.expect(response.hits.hits[2]._attributes.last_name).to.eql(['Joans']);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_2_person"
+    name: 7. Validate entity model
+    meta:
+      id: req_7640f95d94414b52a45455b37fca0ec8
+      created: 1750373611643
+      modified: 1750392328927
+      isPrivate: false
+      description: ""
+      sortKey: -1750373514740
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: >-
+        const expectedAttributes = {
+          //"attributes": {
+            "first_name": {
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            }
+          //}
+        };
+
+
+        const expectedResolvers = {
+          //"resolvers": {
+            "name_only": {
+              "attributes": [ "first_name", "last_name" ]
+            }
+          //}
+        };
+        			
+        const expectedMatchers = {
+          //"matchers": {
+            "simple": {
+              "clause": {
+                "match": {
+                  "{{ field }}": "{{ value }}"
+                }
+              }
+            },
+            "fuzzy": {
+              "clause": {
+                "match": {
+                  "{{ field }}": {
+                    "query": "{{ value }}",
+                    "fuzziness": "1"
+                  }
+                }
+              }
+            }
+          //}
+        };
+        	
+        const expectedIndices = {
+          //"indices": {
+            "zentity_tutorial_2_robust_name_matching": {
+              "fields": {
+                "first_name.clean": {
+                  "attribute": "first_name",
+                  "matcher": "fuzzy"
+                },
+                "first_name.phonetic": {
+                  "attribute": "first_name",
+                  "matcher": "simple"
+                },
+                "last_name.clean": {
+                  "attribute": "last_name",
+                  "matcher": "fuzzy"
+                },
+                "last_name.phonetic": {
+                  "attribute": "last_name",
+                  "matcher": "simple"
+                }
+              }
+            }
+          //}
+        };
+
+
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+
+        insomnia.test('Check if attributes match', () => {
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.attributes).to.eql(expectedAttributes);
+        });
+
+
+        insomnia.test('Check if resolvers match', () => {
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.resolvers).to.eql(expectedResolvers);
+        });
+
+
+        insomnia.test('Check if matchers match', () => {
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.matchers).to.eql(expectedMatchers);
+        });
+
+
+        insomnia.test('Check if indices match', () => {
+        	const jsonBody = insomnia.response.json();
+        	insomnia.expect(jsonBody._source.indices).to.eql(expectedIndices);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/zentity_tutorial_2_robust_name_matching/_analyze"
+    name: 4. Check index analyze phonetic
+    meta:
+      id: req_562f02716e4b4f81872829c1be818460
+      created: 1750373712967
+      modified: 1750395091543
+      isPrivate: false
+      description: ""
+      sortKey: -1750373515104
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "text": "Alice Jones-Smith",
+          "analyzer": "name_phonetic"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: |-
+        const expectedResponse = {
+          "tokens": [
+            {
+              "token": "ALAC",
+              "start_offset": 0,
+              "end_offset": 5,
+              "type": "<ALPHANUM>",
+              "position": 0
+            },
+            {
+              "token": "JAN",
+              "start_offset": 6,
+              "end_offset": 11,
+              "type": "<ALPHANUM>",
+              "position": 1
+            },
+            {
+              "token": "SNAT",
+              "start_offset": 12,
+              "end_offset": 17,
+              "type": "<ALPHANUM>",
+              "position": 2
+            }
+          ]
+        };
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/_zentity/models/zentity_tutorial_2_person"
+    name: 0. Delete entity model
+    meta:
+      id: req_fce340d030ef44bca6b9b89da67ce72a
+      created: 1750373807641
+      modified: 1750392067245
+      isPrivate: false
+      description: ""
+      sortKey: -1750373807641
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/11.2.0
+    scripts:
+      afterResponse: |-
+        insomnia.test('Check if status is 200', () => {
+          insomnia.expect(insomnia.response.code).to.eql(200);
+        });
+
+        insomnia.test('Check if result is deleted', () => {
+        	const jsonBody = insomnia.response.json();
+
+        	insomnia.expect(jsonBody.result).to.be.oneOf(["deleted", "not_found"]);
+        });
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_d56fe87061950e878961722231dd3bd2239612b5
+    created: 1750367960064
+    modified: 1750395112502
+environments:
+  name: Base Environment
+  meta:
+    id: env_d56fe87061950e878961722231dd3bd2239612b5
+    created: 1750367960063
+    modified: 1750395112502
+    isPrivate: false
