@@ -21,6 +21,7 @@ package io.zentity.resolution.input.scope;
 import io.zentity.model.Model;
 import io.zentity.model.ValidationException;
 import io.zentity.resolution.input.Attribute;
+import io.zentity.resolution.input.value.Value;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -91,19 +92,77 @@ public class Include extends ScopeField {
                 throw new ValidationException("'" + attributeName + "' is not defined in the entity model.");
             }
             
-            // For scope attributes, we need to create a simplified Attribute
-            // This is a basic implementation - full parsing would require more work
+            // Get the attribute type from the model
             String attributeType = model.attributes().get(attributeName).type();
-            try {
-                Attribute attribute = new Attribute(attributeName, attributeType);
-                // TODO: Parse values and params from attributeValue if needed
-                attributesObj.put(attributeName, attribute);
-            } catch (ValidationException e) {
-                throw new ValidationException("Error parsing scope attribute '" + attributeName + "': " + e.getMessage());
+            
+            // Create Attribute object and handle both array and object formats
+            Attribute attribute = new Attribute(attributeName, attributeType);
+            
+            // Parse attribute value - handle both array and object formats
+            if (attributeValue instanceof List) {
+                // Array format: {"attribute_name": ["value1", "value2"]}
+                List<Object> valuesList = (List<Object>) attributeValue;
+                for (Object value : valuesList) {
+                    if (value != null) {
+                        addSimpleValueWithValidation(attribute, value, attributeType, attributeName, scopeType);
+                    }
+                }
+            } else if (attributeValue instanceof Map) {
+                // Object format: {"attribute_name": {"values": ["value1"], "params": {...}}}
+                Map<String, Object> attributeObjectMap = (Map<String, Object>) attributeValue;
+                
+                // Parse values if present
+                if (attributeObjectMap.containsKey("values")) {
+                    Object valuesObj = attributeObjectMap.get("values");
+                    if (valuesObj instanceof List) {
+                        List<Object> valuesList = (List<Object>) valuesObj;
+                        for (Object value : valuesList) {
+                            if (value != null) {
+                                addSimpleValueWithValidation(attribute, value, attributeType, attributeName, scopeType);
+                            }
+                        }
+                    } else {
+                        throw new ValidationException("'scope." + scopeType + ".attributes." + attributeName + ".values' must be an array.");
+                    }
+                }
+                
+                // Parse params if present
+                if (attributeObjectMap.containsKey("params")) {
+                    Object paramsObj = attributeObjectMap.get("params");
+                    if (paramsObj instanceof Map) {
+                        Map<String, Object> paramsMap = (Map<String, Object>) paramsObj;
+                        for (Map.Entry<String, Object> paramEntry : paramsMap.entrySet()) {
+                            String paramField = paramEntry.getKey();
+                            Object paramValue = paramEntry.getValue();
+                            
+                            if (paramValue == null) {
+                                attribute.params().put(paramField, "null");
+                            } else {
+                                attribute.params().put(paramField, paramValue.toString());
+                            }
+                        }
+                    } else {
+                        throw new ValidationException("'scope." + scopeType + ".attributes." + attributeName + ".params' must be an object.");
+                    }
+                }
+            } else if (attributeValue != null) {
+                throw new ValidationException("'scope." + scopeType + ".attributes." + attributeName + "' must be an object or array.");
             }
+            
+            attributesObj.put(attributeName, attribute);
         }
         
         return attributesObj;
+    }
+    
+    /**
+     * Add a value to an attribute with proper type validation.
+     */
+    private void addSimpleValueWithValidation(Attribute attribute, Object valueObject, String attributeType, String attributeName, String scopeType) throws ValidationException {
+        // Create the appropriate Value object based on the attribute type
+        // This will perform type validation and throw ValidationException if types don't match
+        Value value = Value.create(attributeType, valueObject);
+        attribute.values().add(value);
     }
     
     /**
