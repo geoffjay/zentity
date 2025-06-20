@@ -121,7 +121,7 @@ public class ZentityPlugin extends Plugin implements ActionPlugin {
 
     /**
      * Return an error response through a RestChannel.
-     * This method is used by the action classes in org.elasticsearch.plugin.zentity.
+     * This method is used by the action classes in org.opensearch.plugin.zentity.
      *
      * @param channel The REST channel to return the response through.
      * @param e       The exception object to process and return.
@@ -159,7 +159,7 @@ public class ZentityPlugin extends Plugin implements ActionPlugin {
 
     /**
      * Return a response through a RestChannel.
-     * This method is used by the action classes in org.elasticsearch.plugin.zentity.
+     * This method is used by the action classes in org.opensearch.plugin.zentity.
      *
      * @param channel The REST channel to return the response through.
      * @param content The content to process and return.
@@ -170,7 +170,7 @@ public class ZentityPlugin extends Plugin implements ActionPlugin {
 
     /**
      * Return a response through a RestChannel.
-     * This method is used by the action classes in org.elasticsearch.plugin.zentity.
+     * This method is used by the action classes in org.opensearch.plugin.zentity.
      *
      * @param channel The REST channel to return the response through.
      * @param content The content to process and return.
@@ -181,7 +181,7 @@ public class ZentityPlugin extends Plugin implements ActionPlugin {
 
     /**
      * Return a response through a RestChannel.
-     * This method is used by the action classes in org.elasticsearch.plugin.zentity.
+     * This method is used by the action classes in org.opensearch.plugin.zentity.
      *
      * @param channel The REST channel to return the response through.
      * @param json    The JSON string to process and return.
@@ -192,7 +192,7 @@ public class ZentityPlugin extends Plugin implements ActionPlugin {
 
     /**
      * Return a response through a RestChannel.
-     * This method is used by the action classes in org.elasticsearch.plugin.zentity.
+     * This method is used by the action classes in org.opensearch.plugin.zentity.
      *
      * @param channel The REST channel to return the response through.
      * @param json    The JSON string to process and return.
